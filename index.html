@@ -148,7 +148,7 @@
     async function refreshQuota(options = {}) {
       const silent = Boolean(options.silent);
       try {
-        const quotaUrl = WEB_APP_URL + '?action=quota&_=' + Date.now();
+        const quotaUrl = WEB_APP_URL + '?action=quota';
         const response = await fetch(quotaUrl, {
           method: 'GET',
           cache: 'no-store',
