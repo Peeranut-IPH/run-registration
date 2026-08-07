@@ -142,7 +142,9 @@
     const confirmRegistrationButton = document.getElementById('confirmRegistration');
     const registrationStatus = document.getElementById('registrationStatus');
     const distanceInputs = Array.from(document.querySelectorAll('input[name="distance"]'));
-    const QUOTA_REFRESH_MS = 20000;
+    // หน้า Preview ของ ChatGPT ทำงานอยู่ใน iframe และจะถามสิทธิ์ทุกครั้งที่
+    // เชื่อมต่อ Apps Script จึงไม่เรียกเครือข่ายอัตโนมัติในโหมด Preview
+    const IS_EMBEDDED_PREVIEW = window.self !== window.top;
     let pendingRegistrationData = null;
 
     async function refreshQuota(options = {}) {
@@ -203,11 +205,20 @@
 
     }
 
-    refreshQuota();
-    window.setInterval(() => refreshQuota({ silent:true }), QUOTA_REFRESH_MS);
-    document.addEventListener('visibilitychange', () => {
-      if (!document.hidden) refreshQuota({ silent:true });
-    });
+    if (IS_EMBEDDED_PREVIEW) {
+      distanceInputs.forEach((input) => {
+        input.disabled = false;
+        const label = input.closest('.distance-option');
+        label.classList.remove('is-closed');
+        label.querySelector('[data-quota]').textContent = 'เปิดรับ';
+      });
+      registrationStatus.textContent = 'หน้าตัวอย่าง';
+      registrationStatus.classList.remove('closed');
+    } else {
+      // หน้าเว็บไซต์จริงตรวจสถานะเพียงครั้งเดียวตอนเปิดหน้า
+      // ฝั่งเซิร์ฟเวอร์ยังตรวจโควตาซ้ำก่อนบันทึกข้อมูลทุกครั้ง
+      refreshQuota();
+    }
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
@@ -231,7 +242,6 @@
         const result = await response.json();
         pendingRegistrationData = result.requiresConfirmation ? data : null;
         showResult(result);
-        refreshQuota({ silent:true });
       } catch (error) {
         showResult({ success:false, message:'เชื่อมต่อระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง หรือติดต่อเจ้าหน้าที่' });
       } finally {
