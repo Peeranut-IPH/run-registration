@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#087f5b">
+  <title>ตรวจสอบข้อมูลการลงทะเบียน | Healthy City</title>
+  <link rel="stylesheet" href="runner-fonts.css">
+  <style>
+    :root{--green:#087f5b;--green-dark:#006b4d;--ink:#183c34;--muted:#58706a;--line:#dce9e4;--surface:#fff;--bg:#f3f7f5;--danger:#b94a4a}
+    *{box-sizing:border-box}body{margin:0;min-height:100vh;color:var(--ink);font-family:"Kanit",Tahoma,sans-serif;background:var(--bg)}
+    .topbar{display:flex;align-items:center;min-height:68px;padding:14px max(20px,calc((100vw - 960px)/2));background:rgba(255,255,255,.92);border-bottom:1px solid var(--line)}.brand{color:var(--green);font-size:14px;font-weight:600;letter-spacing:.6px;text-decoration:none}
+    .page{width:min(100% - 36px,720px);margin:0 auto;padding:50px 0}.hero{text-align:center;margin-bottom:24px}.eyebrow{margin:0;color:var(--green);font-size:11px;font-weight:600;letter-spacing:2.5px}.hero h1{margin:8px 0 7px;font-size:clamp(28px,5vw,39px);font-weight:500;line-height:1.2}.hero p{max-width:520px;margin:0 auto;color:var(--muted);font-size:14px;line-height:1.65}
+    .card{padding:28px;background:var(--surface);border:1px solid var(--line);border-radius:22px;box-shadow:0 16px 42px rgba(28,77,67,.09)}.field{margin-bottom:17px}.field:last-of-type{margin-bottom:21px}label{display:block;margin-bottom:7px;font-size:14px;font-weight:500}.hint{margin:0 0 8px;color:var(--muted);font-size:12px;line-height:1.5}input{width:100%;min-height:51px;padding:12px 15px;color:var(--ink);font:400 15px "Kanit",Tahoma,sans-serif;background:#fff;border:1px solid #b8d5cc;border-radius:12px;outline:none;transition:.2s}input:focus{border-color:var(--green);box-shadow:0 0 0 4px rgba(8,127,91,.11)}button{width:100%;min-height:51px;padding:11px 18px;color:#fff;font:500 16px "Kanit",Tahoma,sans-serif;background:var(--green);border:0;border-radius:11px;cursor:pointer;box-shadow:0 8px 18px rgba(0,139,112,.18);transition:.2s}button:hover{background:var(--green-dark);transform:translateY(-1px)}button:disabled{opacity:.64;cursor:wait;transform:none}
+    .result{margin-top:24px}.message{margin:0;padding:14px 16px;color:var(--muted);text-align:center;font-size:14px;line-height:1.6;background:#eef6f3;border:1px solid #d7e9e4;border-radius:13px}.message.error{color:#963d3d;background:#fff3f3;border-color:#f0cccc}.result-heading{margin:0 0 13px;font-size:18px;font-weight:500}.runner-list{display:grid;gap:13px}.runner{padding:19px;background:#fff;border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 20px rgba(28,77,67,.06)}.runner-name{margin:0 0 13px;font-size:19px;font-weight:500}.runner-details{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:0 0 16px}.detail{padding:10px 11px;background:#f6faf8;border-radius:10px}.detail dt{margin:0 0 2px;color:var(--muted);font-size:11px}.detail dd{margin:0;font-size:14px;font-weight:500}.qr-link{display:block;padding:11px 14px;color:var(--green);font-size:14px;font-weight:500;text-align:center;text-decoration:none;border:1px solid var(--green);border-radius:10px}.qr-link:hover{color:#fff;background:var(--green)}.back{display:block;margin-top:26px;color:var(--green);font-size:14px;text-align:center;text-decoration:none}.back:hover{text-decoration:underline}
+    @media(max-width:560px){.topbar{padding:13px 20px}.page{width:min(100% - 24px,720px);padding:30px 0}.card{padding:22px 17px}.runner-details{grid-template-columns:1fr}.hero p{font-size:13px}}
+  </style>
+</head>
+<body>
+  <header class="topbar"><a class="brand" href="runner-regit.html">HEALTHY CITY · วิ่งล้อมเมือง</a></header>
+  <main class="page">
+    <section class="hero">
+      <p class="eyebrow">RUN AROUND THE CITY</p>
+      <h1>ตรวจสอบข้อมูลการลงทะเบียน</h1>
+      <p>กรอกเบอร์โทรศัพท์และชื่อ-นามสกุลของผู้สมัคร เพื่อเปิดดูข้อมูลการลงทะเบียนและ QR Code</p>
+    </section>
+
+    <section class="card" aria-labelledby="lookupTitle">
+      <h2 id="lookupTitle" hidden>ค้นหาข้อมูลการลงทะเบียน</h2>
+      <form id="lookupForm">
+        <div class="field">
+          <label for="phone">เบอร์โทรศัพท์</label>
+          <input id="phone" name="phone" type="tel" inputmode="numeric" autocomplete="tel" pattern="[0-9]{9,10}" maxlength="10" placeholder="เช่น 0812345678" required>
+        </div>
+        <div class="field">
+          <label for="fullName">ชื่อ-นามสกุล</label>
+          <p class="hint">ไม่ต้องกรอกคำนำหน้า</p>
+          <input id="fullName" name="fullName" autocomplete="name" required>
+        </div>
+        <button id="lookupButton" type="submit">ค้นหาข้อมูล</button>
+      </form>
+    </section>
+
+    <section id="result" class="result" aria-live="polite" hidden></section>
+    <a class="back" href="runner-regit.html">กลับไปหน้าลงทะเบียน</a>
+  </main>
+
+  <script>
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz1IH-RT9X1-ilpni6YQUf0OSOhnWHYi_dxBUuKFxg1UXVMZ0C-xjmSi99YsB6pORqdmw/exec';
+    const lookupForm = document.getElementById('lookupForm');
+    const lookupButton = document.getElementById('lookupButton');
+    const resultElement = document.getElementById('result');
+
+    lookupForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!lookupForm.reportValidity()) return;
+
+      const formData = new FormData(lookupForm);
+      const phone = String(formData.get('phone') || '').trim();
+      const fullName = String(formData.get('fullName') || '').trim();
+
+      lookupButton.disabled = true;
+      lookupButton.textContent = 'กำลังค้นหา...';
+      showMessage('กำลังตรวจสอบข้อมูลการลงทะเบียน');
+
+      try {
+        const query = new URLSearchParams({
+          action: 'runner-lookup',
+          phone: phone,
+          fullName: fullName
+        });
+        const response = await fetch(WEB_APP_URL + '?' + query.toString(), {
+          method: 'GET',
+          cache: 'no-store',
+          redirect: 'follow'
+        });
+        if (!response.ok) throw new Error('ไม่สามารถเชื่อมต่อระบบได้');
+
+        const data = await response.json();
+        if (!data.success) throw new Error(data.message || 'ไม่สามารถค้นหาข้อมูลได้');
+        showRunners(Array.isArray(data.runners) ? data.runners : []);
+      } catch (error) {
+        showMessage(error.message || 'ไม่สามารถค้นหาข้อมูลได้ กรุณาลองใหม่อีกครั้ง', true);
+      } finally {
+        lookupButton.disabled = false;
+        lookupButton.textContent = 'ค้นหาข้อมูล';
+      }
+    });
+
+    function showMessage(message, isError) {
+      resultElement.hidden = false;
+      resultElement.innerHTML = '<p class="message' + (isError ? ' error' : '') + '">' + escapeHtml(message) + '</p>';
+    }
+
+    function showRunners(runners) {
+      if (!runners.length) {
+        showMessage('ไม่พบข้อมูลการลงทะเบียน กรุณาตรวจสอบเบอร์โทรศัพท์และชื่อ-นามสกุลอีกครั้ง', true);
+        return;
+      }
+
+      const cards = runners.map(function (runner) {
+        const fullName = [runner.prefix, runner.firstName, runner.lastName]
+          .filter(Boolean)
+          .join(' ');
+        const bibNumber = runner.bibNumber || 'จะแจ้งให้ทราบภายหลัง';
+
+        return '<article class="runner">' +
+          '<h3 class="runner-name">' + escapeHtml(fullName || 'ผู้สมัคร') + '</h3>' +
+          '<dl class="runner-details">' +
+            '<div class="detail"><dt>ระยะวิ่ง</dt><dd>' + escapeHtml(runner.distance || '-') + '</dd></div>' +
+            '<div class="detail"><dt>เลขลงทะเบียน</dt><dd>' + escapeHtml(runner.runnerId || '-') + '</dd></div>' +
+            '<div class="detail"><dt>หมายเลข BIB</dt><dd>' + escapeHtml(bibNumber) + '</dd></div>' +
+          '</dl>' +
+          '<a class="qr-link" href="' + escapeAttribute(runner.detailsUrl) + '" target="_blank" rel="noopener">เปิดข้อมูลและ QR Code</a>' +
+        '</article>';
+      }).join('');
+
+      resultElement.hidden = false;
+      resultElement.innerHTML = '<h2 class="result-heading">พบข้อมูล ' + runners.length + ' รายการ</h2><div class="runner-list">' + cards + '</div>';
+    }
+
+    function escapeHtml(value) {
+      return String(value == null ? '' : value).replace(/[&<>"']/g, function (character) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[character];
+      });
+    }
+
+    function escapeAttribute(value) {
+      return escapeHtml(value).replace(/`/g, '&#096;');
+    }
+  </script>
+</body>
+</html>
