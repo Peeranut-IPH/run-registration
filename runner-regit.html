@@ -170,6 +170,7 @@
 
     function applyQuota(result) {
       let availableCount = 0;
+      const scheduledTimes = [];
 
       distanceInputs.forEach((input) => {
         const quota = result.byDistance[input.value];
@@ -189,7 +190,12 @@
 
         if (!available && input.checked) input.checked = false;
 
-        if (!open) {
+        if (quota.reason === 'scheduled' && quota.openAt) {
+          scheduledTimes.push(new Date(quota.openAt));
+          quotaText.textContent = 'เปิด ' + formatScheduleTime(quota.openAt);
+        } else if (quota.reason === 'ended') {
+          quotaText.textContent = 'ปิดรับแล้ว';
+        } else if (!open) {
           quotaText.textContent = 'ปิดรับ';
         } else if (full) {
           quotaText.textContent = 'เต็มแล้ว';
@@ -199,11 +205,29 @@
         }
       });
 
-      registrationStatus.textContent = availableCount > 0
-        ? 'เปิดรับลงทะเบียน'
-        : 'ปิดรับลงทะเบียน';
+      if (availableCount > 0) {
+        registrationStatus.textContent = 'เปิดรับลงทะเบียน';
+      } else if (scheduledTimes.length > 0) {
+        const nextOpenAt = scheduledTimes.sort((a, b) => a - b)[0];
+        registrationStatus.textContent = 'เปิดลงทะเบียน ' + formatScheduleTime(nextOpenAt);
+      } else {
+        registrationStatus.textContent = 'ปิดรับลงทะเบียน';
+      }
       registrationStatus.classList.toggle('closed', availableCount === 0);
 
+    }
+
+    function formatScheduleTime(value) {
+      const date = value instanceof Date ? value : new Date(value);
+      if (Number.isNaN(date.getTime())) return '';
+      return new Intl.DateTimeFormat('th-TH', {
+        timeZone: 'Asia/Bangkok',
+        day: 'numeric',
+        month: 'short',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(date) + ' น.';
     }
 
     if (IS_EMBEDDED_PREVIEW) {
@@ -216,9 +240,8 @@
       registrationStatus.textContent = 'หน้าตัวอย่าง';
       registrationStatus.classList.remove('closed');
     } else {
-      // หน้าเว็บไซต์จริงตรวจสถานะเพียงครั้งเดียวตอนเปิดหน้า
-      // ฝั่งเซิร์ฟเวอร์ยังตรวจโควตาซ้ำก่อนบันทึกข้อมูลทุกครั้ง
       refreshQuota();
+      window.setInterval(() => refreshQuota({ silent: true }), 30000);
     }
 
     form.addEventListener('submit', async (event) => {
