@@ -36,6 +36,7 @@
     .terms{display:flex;align-items:flex-start;gap:10px;padding:14px;margin:18px 0 15px;background:#f3f8f6;border-radius:10px}.terms input{flex:0 0 auto;width:18px;min-height:18px;margin-top:1px;accent-color:var(--green)}.terms label{margin:0;font-size:12px;font-weight:300;line-height:1.55}
     button{width:100%;min-height:51px;padding:11px 18px;color:#fff;font:500 16px "Kanit",sans-serif;background:var(--green);border:0;border-radius:10px;cursor:pointer;box-shadow:0 8px 18px rgba(0,139,112,.18);transition:.2s}button:hover{background:#00765f;transform:translateY(-1px)}button:disabled{opacity:.62;cursor:wait;transform:none}.registration-lookup{margin:10px 0 0;text-align:center;font-size:14px}.registration-lookup a{color:var(--green);font-weight:500;text-underline-offset:3px}.registration-lookup a:hover{color:#006b56}.privacy{margin:13px 0 0;color:#526a66;text-align:center;font-size:14px;font-weight:400;line-height:1.55}.privacy strong{font-weight:500}
     .modal{position:fixed;z-index:10;inset:0;display:none;align-items:flex-start;justify-content:center;padding:38px 18px;overflow:auto;background:#f3f7f5}.modal.show{display:flex}.dialog{width:min(100%,690px);padding:40px;text-align:center;background:#fff;border:1px solid var(--line);border-radius:25px;box-shadow:0 22px 55px rgba(28,77,67,.12)}.icon{display:grid;place-items:center;width:68px;height:68px;margin:0 auto 17px;color:#fff;background:var(--green);border-radius:50%;font-size:35px;box-shadow:0 10px 25px rgba(0,139,112,.22)}.dialog.error .icon{background:var(--danger)}.dialog.warning .icon{background:#e89b1c}.dialog h2{margin:0 0 8px;font-size:36px;font-weight:500}.dialog p{margin:0 0 20px;color:var(--muted);line-height:1.6}.runner-id{padding:20px;margin:0 0 18px;text-align:left;color:var(--ink);background:#f8fbfa;border:1px dashed #a8cbc2;border-radius:15px;font-size:19px;font-weight:600}.link{display:block;margin:0 0 16px;color:var(--green);font-weight:500}.success-next{display:grid;gap:9px;margin:0 0 18px;padding:15px;color:#42635b;text-align:left;background:#f3f8f6;border:1px solid #d7e9e4;border-radius:13px}.success-next p{margin:0;font-size:13px;line-height:1.55}.success-next strong{font-weight:500;color:var(--ink)}.dialog-actions{display:grid;grid-template-columns:1fr;gap:11px}.dialog-actions.two-actions{grid-template-columns:1fr 1fr}.secondary-button{color:var(--green);background:#fff;border:1px solid var(--green);box-shadow:none}.secondary-button:hover{background:#f1faf7}
+    .link[hidden]{display:none}
     @media(max-width:780px){.topbar{padding:9px 15px}.brand-text{display:none}.page{width:min(100% - 20px,1120px);padding-top:14px}.hero{padding-bottom:18px}.event-logo{width:145px;height:65px}h1{font-size:31px}.organization{font-size:14px}.card{padding:22px 17px}.grid{grid-template-columns:1fr}.field.full{grid-column:auto}.dialog{padding:29px 18px}.dialog h2{font-size:29px}.dialog-actions,.dialog-actions.two-actions{grid-template-columns:1fr}}
   </style>
 </head>
@@ -267,11 +268,69 @@
         pendingRegistrationData = result.requiresConfirmation ? data : null;
         showResult(result);
       } catch (error) {
-        showResult({ success:false, message:'เชื่อมต่อระบบไม่สำเร็จ กรุณาลองใหม่อีกครั้ง หรือติดต่อเจ้าหน้าที่' });
+        const recovered = await recoverSavedRegistration(data);
+        if (recovered) {
+          pendingRegistrationData = null;
+          showResult({
+            success: true,
+            runnerId: recovered.runnerId,
+            qrUrl: recovered.detailsUrl,
+            message: 'พบว่าระบบบันทึกข้อมูลการลงทะเบียนไว้แล้ว'
+          });
+        } else {
+          showResult({
+            success: false,
+            message: 'ยังยืนยันผลการลงทะเบียนไม่ได้ กรุณาใช้เมนูตรวจสอบข้อมูลการลงทะเบียนก่อนลองใหม่'
+          });
+        }
       } finally {
         submitButton.disabled = false;
         submitButton.textContent = 'ยืนยันการลงทะเบียน';
       }
+    }
+
+    async function recoverSavedRegistration(data) {
+      const phone = String(data.phone || '').replace(/\D/g, '');
+      const fullName = [data.firstName, data.lastName]
+        .map((value) => String(value || '').trim())
+        .filter(Boolean)
+        .join(' ');
+
+      if (!phone || !fullName) return null;
+
+      const query = new URLSearchParams({
+        action: 'runner-lookup',
+        phone,
+        fullName
+      });
+      const delays = [0, 1000, 2000];
+
+      for (const delay of delays) {
+        if (delay) {
+          await new Promise((resolve) => window.setTimeout(resolve, delay));
+        }
+
+        try {
+          const response = await fetch(WEB_APP_URL + '?' + query.toString(), {
+            method: 'GET',
+            cache: 'no-store',
+            redirect: 'follow'
+          });
+          if (!response.ok) continue;
+
+          const result = await response.json();
+          if (!result.success || !Array.isArray(result.runners)) continue;
+
+          const distance = String(data.distance || '').trim().toUpperCase();
+          return result.runners.find((runner) =>
+            String(runner.distance || '').trim().toUpperCase() === distance
+          ) || result.runners[0] || null;
+        } catch (recoveryError) {
+          // ลองค้นหาใหม่ตามรอบที่กำหนด
+        }
+      }
+
+      return null;
     }
 
     function showResult(result) {
