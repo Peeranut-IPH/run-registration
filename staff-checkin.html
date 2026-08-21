@@ -119,6 +119,36 @@
     .staff-bar span { color: var(--muted); font-size: 11px; }
     .logout { width: auto; min-height: 38px; padding: 7px 12px; font-size: 12px; }
 
+    .summary-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .summary-header h2 { margin: 0; }
+    .summary-refresh { width: auto; min-height: 38px; padding: 7px 12px; font-size: 12px; }
+    .summary-total {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 2px 12px;
+      align-items: center;
+      padding: 14px;
+      background: var(--success-bg);
+      border: 1px solid #cdeade;
+      border-radius: 13px;
+    }
+    .summary-total span { font-size: 14px; font-weight: 500; }
+    .summary-total strong { grid-row: span 2; color: var(--green); font-size: 34px; line-height: 1; }
+    .summary-total small { color: var(--muted); font-size: 11px; }
+    .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 9px; }
+    .summary-distance { padding: 12px 9px; text-align: center; background: #f4f8f6; border-radius: 11px; }
+    .summary-distance span { display: block; color: var(--muted); font-size: 11px; }
+    .summary-distance strong { display: block; margin: 3px 0; color: var(--green); font-size: 24px; }
+    .summary-distance small { display: block; color: var(--muted); font-size: 10px; line-height: 1.4; }
+    .summary-breakdown { margin: 10px 0 0; color: var(--muted); font-size: 12px; text-align: center; }
+    .summary-warning { margin-top: 10px; padding: 10px 12px; color: var(--warning); font-size: 12px; text-align: center; background: var(--warning-bg); border-radius: 10px; }
+
     .scanner-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
     #reader { overflow: hidden; margin-top: 14px; border-radius: 15px; }
     #reader video { border-radius: 13px; }
@@ -200,6 +230,9 @@
       .manual-row .button { width: 100%; }
       .search-result { grid-template-columns: 1fr; }
       .search-result .button { width: 100%; }
+      .summary-grid { grid-template-columns: 1fr; }
+      .summary-distance { display: grid; grid-template-columns: 1fr auto; align-items: center; text-align: left; }
+      .summary-distance strong { grid-row: span 2; }
     }
   </style>
 </head>
@@ -244,6 +277,16 @@
         <button id="logoutButton" class="button danger logout" type="button">ออกจากระบบ</button>
       </div>
 
+      <section id="summaryCard" class="card">
+        <div class="summary-header">
+          <h2>สรุปผู้เช็กอิน</h2>
+          <button id="refreshSummaryButton" class="button secondary summary-refresh" type="button">อัปเดต</button>
+        </div>
+        <div id="checkinSummary" aria-live="polite">
+          <p class="message">กำลังโหลดข้อมูลสรุป</p>
+        </div>
+      </section>
+
       <section id="scannerCard" class="card">
         <h2>สแกน QR Code</h2>
         <p class="description">กดเปิดกล้อง แล้วส่อง QR Code ของผู้สมัครให้อยู่กลางกรอบ</p>
@@ -283,6 +326,8 @@
     const checkinArea = document.getElementById('checkinArea');
     const activeStaffName = document.getElementById('activeStaffName');
     const logoutButton = document.getElementById('logoutButton');
+    const refreshSummaryButton = document.getElementById('refreshSummaryButton');
+    const checkinSummary = document.getElementById('checkinSummary');
     const scannerCard = document.getElementById('scannerCard');
     const startCameraButton = document.getElementById('startCameraButton');
     const stopCameraButton = document.getElementById('stopCameraButton');
@@ -331,6 +376,7 @@
         currentMethod = 'QR';
         loginMessage.hidden = true;
         showMessage(scannerMessage, 'พร้อมสแกน กดเปิดกล้องเพื่อเริ่มใช้งาน');
+        loadCheckinSummary();
       } catch (error) {
         showMessage(loginMessage, error.message || 'เข้าสู่ระบบไม่สำเร็จ', 'error');
       } finally {
@@ -353,9 +399,11 @@
       staffSearchQuery.value = '';
       staffSearchResults.hidden = true;
       staffSearchResults.innerHTML = '';
+      checkinSummary.innerHTML = '<p class="message">เข้าสู่ระบบเพื่อดูข้อมูลสรุป</p>';
       loginMessage.hidden = true;
     });
 
+    refreshSummaryButton.addEventListener('click', loadCheckinSummary);
     startCameraButton.addEventListener('click', startCamera);
     stopCameraButton.addEventListener('click', stopCamera);
 
@@ -382,6 +430,64 @@
         staffSearchButton.click();
       }
     });
+
+    async function loadCheckinSummary() {
+      if (!credentials) return;
+      refreshSummaryButton.disabled = true;
+      refreshSummaryButton.textContent = 'กำลังโหลด...';
+      checkinSummary.innerHTML = '<p class="message">กำลังโหลดข้อมูลสรุป</p>';
+
+      try {
+        const data = await postToApi({
+          action: 'staff-checkin-summary',
+          staffName: credentials.staffName,
+          pin: credentials.pin
+        });
+        renderCheckinSummary(data.summary || {}, data.updatedAt || '');
+      } catch (error) {
+        showMessage(checkinSummary, error.message || 'โหลดข้อมูลสรุปไม่สำเร็จ', 'error');
+      } finally {
+        refreshSummaryButton.disabled = false;
+        refreshSummaryButton.textContent = 'อัปเดต';
+      }
+    }
+
+    function renderCheckinSummary(summary, updatedAt) {
+      const byDistance = summary.byDistance || {};
+      const byType = summary.byType || {};
+      const totalCheckedIn = nonNegativeNumber(summary.totalCheckedIn);
+      const totalRegistered = nonNegativeNumber(summary.totalRegistered);
+      const missingBib = nonNegativeNumber(summary.missingBib);
+      const distances = ['3 KM', '5 KM', '10 KM'];
+      const distanceCards = distances.map(function (distance) {
+        const item = byDistance[distance] || {};
+        return '<div class="summary-distance">' +
+          '<span>' + distance + '</span>' +
+          '<strong>' + nonNegativeNumber(item.checkedIn) + '</strong>' +
+          '<small>ผู้สมัคร ' + nonNegativeNumber(item.public) +
+          ' · VIP ' + nonNegativeNumber(item.vip) + '</small>' +
+        '</div>';
+      }).join('');
+
+      checkinSummary.innerHTML =
+        '<div class="summary-total">' +
+          '<span>เช็กอินแล้วทั้งหมด</span>' +
+          '<strong>' + totalCheckedIn + '</strong>' +
+          '<small>จากผู้สมัครที่ยังไม่ยกเลิก ' + totalRegistered + ' คน</small>' +
+        '</div>' +
+        '<div class="summary-grid">' + distanceCards + '</div>' +
+        '<p class="summary-breakdown">ผู้สมัคร ' + nonNegativeNumber(byType.PUBLIC) +
+          ' คน · VIP ' + nonNegativeNumber(byType.VIP) +
+          ' คน · อัปเดต ' + escapeHtml(updatedAt || '-') + '</p>' +
+        (missingBib > 0
+          ? '<p class="summary-warning">ยังไม่มี BIB ' + missingBib + ' คน</p>'
+          : '');
+    }
+
+    function nonNegativeNumber(value) {
+      const number = Number(value);
+      return Number.isFinite(number) && number > 0 ? Math.floor(number) : 0;
+    }
 
     async function searchStaffRunners() {
       if (!credentials) return;
@@ -616,6 +722,7 @@
         '<button id="nextScanButton" class="button" type="button">สแกนคนถัดไป</button>' +
       '</div>';
       document.getElementById('nextScanButton').addEventListener('click', resetForNextScan);
+      loadCheckinSummary();
     }
 
     async function resetForNextScan() {
