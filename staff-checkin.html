@@ -136,6 +136,21 @@
     .manual-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
     .manual-row .button { width: auto; min-width: 104px; }
 
+    .search-results { display: grid; gap: 9px; margin-top: 12px; }
+    .search-result {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      align-items: center;
+      padding: 13px;
+      background: #f4f8f6;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+    .search-result strong { display: block; font-size: 15px; }
+    .search-result span { display: block; margin-top: 3px; color: var(--muted); font-size: 12px; }
+    .search-result .button { width: auto; min-width: 80px; min-height: 42px; padding: 8px 13px; font-size: 13px; }
+
     .message {
       margin: 0;
       padding: 14px;
@@ -183,6 +198,8 @@
       .details { grid-template-columns: 1fr; }
       .manual-row { grid-template-columns: 1fr; }
       .manual-row .button { width: 100%; }
+      .search-result { grid-template-columns: 1fr; }
+      .search-result .button { width: 100%; }
     }
   </style>
 </head>
@@ -242,6 +259,14 @@
           <input id="manualToken" aria-label="ลิงก์ QR หรือ Token" placeholder="วางลิงก์ QR หรือ Token">
           <button id="manualButton" class="button secondary" type="button">ตรวจสอบ</button>
         </div>
+
+        <div class="divider">ค้นหาผู้สมัครสำรอง</div>
+        <p class="description">ใช้เมื่อ QR เปิดไม่ได้ หรือผู้สมัคร VIP ไม่มี QR</p>
+        <div class="manual-row">
+          <input id="staffSearchQuery" aria-label="ค้นหาผู้สมัคร" placeholder="BIB เลขลงทะเบียน หรือชื่อ-นามสกุล">
+          <button id="staffSearchButton" class="button secondary" type="button">ค้นหา</button>
+        </div>
+        <div id="staffSearchResults" class="search-results" aria-live="polite" hidden></div>
       </section>
 
       <section id="resultCard" class="card" aria-live="polite" hidden></section>
@@ -264,6 +289,9 @@
     const scannerMessage = document.getElementById('scannerMessage');
     const manualToken = document.getElementById('manualToken');
     const manualButton = document.getElementById('manualButton');
+    const staffSearchQuery = document.getElementById('staffSearchQuery');
+    const staffSearchButton = document.getElementById('staffSearchButton');
+    const staffSearchResults = document.getElementById('staffSearchResults');
     const resultCard = document.getElementById('resultCard');
 
     let credentials = null;
@@ -271,6 +299,8 @@
     let scannerRunning = false;
     let processingScan = false;
     let currentToken = '';
+    let currentRunnerId = '';
+    let currentMethod = 'QR';
 
     loginForm.addEventListener('submit', async function (event) {
       event.preventDefault();
@@ -293,6 +323,12 @@
         activeStaffName.textContent = credentials.staffName;
         loginCard.hidden = true;
         checkinArea.hidden = false;
+        scannerCard.hidden = false;
+        resultCard.hidden = true;
+        resultCard.innerHTML = '';
+        currentToken = '';
+        currentRunnerId = '';
+        currentMethod = 'QR';
         loginMessage.hidden = true;
         showMessage(scannerMessage, 'พร้อมสแกน กดเปิดกล้องเพื่อเริ่มใช้งาน');
       } catch (error) {
@@ -310,7 +346,13 @@
       document.getElementById('staffPin').value = '';
       checkinArea.hidden = true;
       loginCard.hidden = false;
+      scannerCard.hidden = false;
       resultCard.hidden = true;
+      resultCard.innerHTML = '';
+      manualToken.value = '';
+      staffSearchQuery.value = '';
+      staffSearchResults.hidden = true;
+      staffSearchResults.innerHTML = '';
       loginMessage.hidden = true;
     });
 
@@ -323,7 +365,7 @@
         showMessage(scannerMessage, 'ลิงก์ QR หรือ Token ไม่ถูกต้อง', 'error');
         return;
       }
-      await inspectRunner(token);
+      await inspectRunner({ token: token, method: 'QR' });
     });
 
     manualToken.addEventListener('keydown', function (event) {
@@ -332,6 +374,82 @@
         manualButton.click();
       }
     });
+
+    staffSearchButton.addEventListener('click', searchStaffRunners);
+    staffSearchQuery.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        staffSearchButton.click();
+      }
+    });
+
+    async function searchStaffRunners() {
+      if (!credentials) return;
+      const query = staffSearchQuery.value.trim();
+      if (query.length < 2) {
+        showMessage(staffSearchResults, 'กรุณากรอกข้อมูลค้นหาอย่างน้อย 2 ตัว', 'error');
+        return;
+      }
+
+      staffSearchButton.disabled = true;
+      showMessage(staffSearchResults, 'กำลังค้นหาผู้สมัคร');
+
+      try {
+        const data = await postToApi({
+          action: 'staff-runner-search',
+          staffName: credentials.staffName,
+          pin: credentials.pin,
+          query: query
+        });
+        showStaffSearchResults(
+          Array.isArray(data.runners) ? data.runners : [],
+          Boolean(data.truncated)
+        );
+      } catch (error) {
+        showMessage(staffSearchResults, error.message || 'ค้นหาผู้สมัครไม่สำเร็จ', 'error');
+      } finally {
+        staffSearchButton.disabled = false;
+      }
+    }
+
+    function showStaffSearchResults(runners, truncated) {
+      if (!runners.length) {
+        showMessage(staffSearchResults, 'ไม่พบผู้สมัครที่ตรงกับข้อมูลค้นหา', 'error');
+        return;
+      }
+
+      const cards = runners.map(function (runner) {
+        const fullName = [runner.prefix, runner.firstName, runner.lastName]
+          .filter(Boolean)
+          .join(' ');
+        const typeLabel = runner.registrationType === 'VIP' ? 'VIP' : 'ผู้สมัคร';
+        const statusLabel = runner.checkinStatus === 'CHECKED_IN'
+          ? 'เช็กอินแล้ว'
+          : (runner.registrationStatus === 'CANCELLED' ? 'ยกเลิกแล้ว' : 'ยังไม่เช็กอิน');
+
+        return '<article class="search-result">' +
+          '<div><strong>' + escapeHtml(fullName || '-') + '</strong>' +
+          '<span>BIB ' + escapeHtml(runner.bibNumber || '-') +
+          ' · ' + escapeHtml(runner.distance || '-') +
+          ' · ' + typeLabel +
+          ' · ' + statusLabel + '</span></div>' +
+          '<button class="button secondary select-runner" type="button" data-runner-id="' + escapeHtml(runner.runnerId || '') + '">เลือก</button>' +
+        '</article>';
+      }).join('');
+
+      staffSearchResults.hidden = false;
+      staffSearchResults.innerHTML = cards + (truncated
+        ? '<p class="message warning">พบมากกว่า 20 รายการ กรุณากรอกข้อมูลให้ละเอียดขึ้น</p>'
+        : '');
+      staffSearchResults.querySelectorAll('.select-runner').forEach(function (button) {
+        button.addEventListener('click', function () {
+          inspectRunner({
+            runnerId: String(button.dataset.runnerId || ''),
+            method: 'SEARCH'
+          });
+        });
+      });
+    }
 
     async function startCamera() {
       if (scannerRunning || processingScan) return;
@@ -361,7 +479,7 @@
             }
             processingScan = true;
             await stopCamera();
-            await inspectRunner(token);
+            await inspectRunner({ token: token, method: 'QR' });
             processingScan = false;
           },
           function () {}
@@ -386,9 +504,11 @@
       stopCameraButton.disabled = true;
     }
 
-    async function inspectRunner(token) {
+    async function inspectRunner(reference) {
       if (!credentials) return;
-      currentToken = token;
+      currentToken = String(reference && reference.token ? reference.token : '');
+      currentRunnerId = String(reference && reference.runnerId ? reference.runnerId : '');
+      currentMethod = String(reference && reference.method ? reference.method : 'QR');
       manualButton.disabled = true;
       showMessage(scannerMessage, 'กำลังตรวจสอบข้อมูลผู้สมัคร');
 
@@ -397,7 +517,8 @@
           action: 'staff-runner-details',
           staffName: credentials.staffName,
           pin: credentials.pin,
-          token: token
+          token: currentToken,
+          runnerId: currentRunnerId
         });
         scannerCard.hidden = true;
         scannerMessage.hidden = true;
@@ -453,7 +574,7 @@
 
     async function confirmCheckin() {
       const button = document.getElementById('confirmCheckinButton');
-      if (!button || !currentToken || !credentials) return;
+      if (!button || (!currentToken && !currentRunnerId) || !credentials) return;
       button.disabled = true;
       button.textContent = 'กำลังบันทึก...';
 
@@ -462,7 +583,9 @@
           action: 'staff-checkin',
           staffName: credentials.staffName,
           pin: credentials.pin,
-          token: currentToken
+          token: currentToken,
+          runnerId: currentRunnerId,
+          method: currentMethod
         });
         showCheckinSuccess(data.runner, Boolean(data.alreadyCheckedIn));
       } catch (error) {
@@ -497,7 +620,12 @@
 
     async function resetForNextScan() {
       currentToken = '';
+      currentRunnerId = '';
+      currentMethod = 'QR';
       manualToken.value = '';
+      staffSearchQuery.value = '';
+      staffSearchResults.hidden = true;
+      staffSearchResults.innerHTML = '';
       resultCard.hidden = true;
       resultCard.innerHTML = '';
       scannerCard.hidden = false;
