@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#087f5b">
+  <title>Staff Check-in | Healthy City</title>
+  <link rel="stylesheet" href="runner-fonts.css">
+  <style>
+    :root {
+      --green: #087f5b;
+      --green-dark: #006b4d;
+      --ink: #153d34;
+      --muted: #60736e;
+      --line: #d8e7e2;
+      --surface: #fff;
+      --bg: #f2f7f5;
+      --success-bg: #e8f8f1;
+      --warning: #a96500;
+      --warning-bg: #fff7e8;
+      --danger: #b83f47;
+      --danger-bg: #fff1f2;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: "Kanit", Tahoma, sans-serif;
+      background: var(--bg);
+    }
+
+    button, input { font: inherit; }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 64px;
+      padding: 12px max(16px, calc((100vw - 720px) / 2));
+      color: #fff;
+      background: var(--green);
+    }
+
+    .brand { font-size: 15px; font-weight: 600; letter-spacing: .4px; }
+    .staff-label { font-size: 12px; opacity: .82; }
+
+    .page {
+      width: min(100% - 24px, 680px);
+      margin: 0 auto;
+      padding: 26px 0 48px;
+    }
+
+    .hero { margin-bottom: 18px; text-align: center; }
+    .eyebrow { margin: 0; color: var(--green); font-size: 11px; font-weight: 600; letter-spacing: 2px; }
+    h1 { margin: 7px 0 4px; font-size: clamp(28px, 7vw, 38px); font-weight: 600; line-height: 1.2; }
+    .hero p:last-child { margin: 0; color: var(--muted); font-size: 13px; }
+
+    .card {
+      padding: 22px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 20px;
+      box-shadow: 0 14px 36px rgba(20, 74, 62, .08);
+    }
+
+    .card + .card { margin-top: 16px; }
+    .card h2 { margin: 0 0 7px; font-size: 21px; font-weight: 600; }
+    .description { margin: 0 0 18px; color: var(--muted); font-size: 13px; line-height: 1.65; }
+    .field { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; }
+
+    input {
+      width: 100%;
+      min-height: 50px;
+      padding: 11px 14px;
+      color: var(--ink);
+      background: #fff;
+      border: 1px solid #b6d4ca;
+      border-radius: 11px;
+      outline: none;
+    }
+
+    input:focus { border-color: var(--green); box-shadow: 0 0 0 4px rgba(8, 127, 91, .1); }
+
+    .button {
+      width: 100%;
+      min-height: 50px;
+      padding: 11px 16px;
+      color: #fff;
+      font-weight: 500;
+      background: var(--green);
+      border: 0;
+      border-radius: 11px;
+      cursor: pointer;
+    }
+
+    .button:hover { background: var(--green-dark); }
+    .button:disabled { opacity: .58; cursor: wait; }
+    .button.secondary { color: var(--green); background: #fff; border: 1px solid var(--green); }
+    .button.secondary:hover { color: #fff; background: var(--green); }
+    .button.danger { color: var(--danger); background: var(--danger-bg); border: 1px solid #efc6ca; }
+
+    .staff-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding: 12px 14px;
+      background: var(--success-bg);
+      border: 1px solid #cdeade;
+      border-radius: 13px;
+    }
+
+    .staff-bar strong { display: block; font-size: 14px; }
+    .staff-bar span { color: var(--muted); font-size: 11px; }
+    .logout { width: auto; min-height: 38px; padding: 7px 12px; font-size: 12px; }
+
+    .scanner-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    #reader { overflow: hidden; margin-top: 14px; border-radius: 15px; }
+    #reader video { border-radius: 13px; }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 19px 0 14px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .divider::before, .divider::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+    .manual-row { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+    .manual-row .button { width: auto; min-width: 104px; }
+
+    .message {
+      margin: 0;
+      padding: 14px;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
+      text-align: center;
+      background: #eef6f3;
+      border: 1px solid #d6e9e3;
+      border-radius: 12px;
+    }
+
+    .message.error { color: var(--danger); background: var(--danger-bg); border-color: #efc6ca; }
+    .message.warning { color: var(--warning); background: var(--warning-bg); border-color: #eed49d; }
+
+    .runner-result { display: grid; gap: 14px; }
+    .status-icon {
+      display: grid;
+      place-items: center;
+      width: 64px;
+      height: 64px;
+      margin: 0 auto;
+      color: #fff;
+      font-size: 34px;
+      background: var(--green);
+      border-radius: 50%;
+    }
+
+    .status-icon.warning { background: #efa018; }
+    .status-icon.error { background: #d3373f; }
+    .runner-title { margin: 0; font-size: 25px; line-height: 1.25; text-align: center; }
+    .runner-name { margin: -5px 0 0; color: var(--muted); font-size: 17px; text-align: center; }
+    .details { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+    .detail { padding: 12px; background: #f4f8f6; border-radius: 11px; }
+    .detail span { display: block; color: var(--muted); font-size: 11px; }
+    .detail strong { display: block; margin-top: 2px; font-size: 17px; }
+    .detail.bib strong { color: var(--green); font-size: 25px; }
+    .action-stack { display: grid; gap: 9px; }
+    .privacy { margin: 14px 0 0; color: var(--muted); font-size: 11px; line-height: 1.55; text-align: center; }
+    [hidden] { display: none !important; }
+
+    @media (max-width: 520px) {
+      .page { width: min(100% - 16px, 680px); padding-top: 18px; }
+      .card { padding: 19px 15px; border-radius: 17px; }
+      .details { grid-template-columns: 1fr; }
+      .manual-row { grid-template-columns: 1fr; }
+      .manual-row .button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <div class="brand">HEALTHY CITY · วิ่งล้อมเมือง</div>
+      <div class="staff-label">สำหรับเจ้าหน้าที่เท่านั้น</div>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="hero">
+      <p class="eyebrow">RUN AROUND THE CITY</p>
+      <h1>Staff Check-in</h1>
+      <p>สแกน QR Code และยืนยันผู้เข้าร่วมงาน</p>
+    </section>
+
+    <section id="loginCard" class="card">
+      <h2>เข้าสู่ระบบเจ้าหน้าที่</h2>
+      <p class="description">กรอกชื่อผู้ปฏิบัติงานและรหัสที่ผู้ดูแลระบบกำหนด</p>
+      <form id="loginForm">
+        <div class="field">
+          <label for="staffName">ชื่อเจ้าหน้าที่</label>
+          <input id="staffName" name="staffName" autocomplete="name" maxlength="80" required>
+        </div>
+        <div class="field">
+          <label for="staffPin">รหัส Staff Check-in</label>
+          <input id="staffPin" name="staffPin" type="password" inputmode="text" autocomplete="off" minlength="8" maxlength="32" required>
+        </div>
+        <button id="loginButton" class="button" type="submit">เข้าสู่ระบบ</button>
+      </form>
+      <div id="loginMessage" style="margin-top:14px" aria-live="polite" hidden></div>
+    </section>
+
+    <section id="checkinArea" hidden>
+      <div class="staff-bar">
+        <div>
+          <span>เจ้าหน้าที่</span>
+          <strong id="activeStaffName"></strong>
+        </div>
+        <button id="logoutButton" class="button danger logout" type="button">ออกจากระบบ</button>
+      </div>
+
+      <section id="scannerCard" class="card">
+        <h2>สแกน QR Code</h2>
+        <p class="description">กดเปิดกล้อง แล้วส่อง QR Code ของผู้สมัครให้อยู่กลางกรอบ</p>
+        <div class="scanner-actions">
+          <button id="startCameraButton" class="button" type="button">เปิดกล้อง</button>
+          <button id="stopCameraButton" class="button secondary" type="button" disabled>ปิดกล้อง</button>
+        </div>
+        <div id="reader"></div>
+        <div id="scannerMessage" style="margin-top:14px" aria-live="polite" hidden></div>
+
+        <div class="divider">กรณีกล้องสแกนไม่ได้</div>
+        <div class="manual-row">
+          <input id="manualToken" aria-label="ลิงก์ QR หรือ Token" placeholder="วางลิงก์ QR หรือ Token">
+          <button id="manualButton" class="button secondary" type="button">ตรวจสอบ</button>
+        </div>
+      </section>
+
+      <section id="resultCard" class="card" aria-live="polite" hidden></section>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script>
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz1IH-RT9X1-ilpni6YQUf0OSOhnWHYi_dxBUuKFxg1UXVMZ0C-xjmSi99YsB6pORqdmw/exec';
+    const loginCard = document.getElementById('loginCard');
+    const loginForm = document.getElementById('loginForm');
+    const loginButton = document.getElementById('loginButton');
+    const loginMessage = document.getElementById('loginMessage');
+    const checkinArea = document.getElementById('checkinArea');
+    const activeStaffName = document.getElementById('activeStaffName');
+    const logoutButton = document.getElementById('logoutButton');
+    const scannerCard = document.getElementById('scannerCard');
+    const startCameraButton = document.getElementById('startCameraButton');
+    const stopCameraButton = document.getElementById('stopCameraButton');
+    const scannerMessage = document.getElementById('scannerMessage');
+    const manualToken = document.getElementById('manualToken');
+    const manualButton = document.getElementById('manualButton');
+    const resultCard = document.getElementById('resultCard');
+
+    let credentials = null;
+    let scanner = null;
+    let scannerRunning = false;
+    let processingScan = false;
+    let currentToken = '';
+
+    loginForm.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      if (!loginForm.reportValidity()) return;
+
+      const staffName = document.getElementById('staffName').value.trim();
+      const pin = document.getElementById('staffPin').value.trim();
+      loginButton.disabled = true;
+      loginButton.textContent = 'กำลังตรวจสอบ...';
+      showMessage(loginMessage, 'กำลังตรวจสอบสิทธิ์เจ้าหน้าที่');
+
+      try {
+        const data = await postToApi({
+          action: 'staff-checkin-auth',
+          staffName: staffName,
+          pin: pin
+        });
+
+        credentials = { staffName: data.staffName || staffName, pin: pin };
+        activeStaffName.textContent = credentials.staffName;
+        loginCard.hidden = true;
+        checkinArea.hidden = false;
+        loginMessage.hidden = true;
+        showMessage(scannerMessage, 'พร้อมสแกน กดเปิดกล้องเพื่อเริ่มใช้งาน');
+      } catch (error) {
+        showMessage(loginMessage, error.message || 'เข้าสู่ระบบไม่สำเร็จ', 'error');
+      } finally {
+        loginButton.disabled = false;
+        loginButton.textContent = 'เข้าสู่ระบบ';
+      }
+    });
+
+    logoutButton.addEventListener('click', async function () {
+      await stopCamera();
+      credentials = null;
+      currentToken = '';
+      document.getElementById('staffPin').value = '';
+      checkinArea.hidden = true;
+      loginCard.hidden = false;
+      resultCard.hidden = true;
+      loginMessage.hidden = true;
+    });
+
+    startCameraButton.addEventListener('click', startCamera);
+    stopCameraButton.addEventListener('click', stopCamera);
+
+    manualButton.addEventListener('click', async function () {
+      const token = extractToken(manualToken.value);
+      if (!token) {
+        showMessage(scannerMessage, 'ลิงก์ QR หรือ Token ไม่ถูกต้อง', 'error');
+        return;
+      }
+      await inspectRunner(token);
+    });
+
+    manualToken.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        manualButton.click();
+      }
+    });
+
+    async function startCamera() {
+      if (scannerRunning || processingScan) return;
+      if (typeof Html5Qrcode === 'undefined') {
+        showMessage(scannerMessage, 'โหลดระบบกล้องไม่สำเร็จ กรุณาใช้ช่องวางลิงก์ QR ด้านล่าง', 'error');
+        return;
+      }
+
+      startCameraButton.disabled = true;
+      showMessage(scannerMessage, 'กำลังเปิดกล้อง กรุณาอนุญาตการใช้กล้อง');
+
+      try {
+        scanner = scanner || new Html5Qrcode('reader');
+        await scanner.start(
+          { facingMode: 'environment' },
+          {
+            fps: 10,
+            qrbox: { width: 230, height: 230 },
+            aspectRatio: 1
+          },
+          async function (decodedText) {
+            if (processingScan) return;
+            const token = extractToken(decodedText);
+            if (!token) {
+              showMessage(scannerMessage, 'QR Code นี้ไม่ใช่ QR ของระบบลงทะเบียน', 'error');
+              return;
+            }
+            processingScan = true;
+            await stopCamera();
+            await inspectRunner(token);
+            processingScan = false;
+          },
+          function () {}
+        );
+
+        scannerRunning = true;
+        stopCameraButton.disabled = false;
+        scannerMessage.hidden = true;
+      } catch (error) {
+        showMessage(scannerMessage, 'เปิดกล้องไม่สำเร็จ กรุณาอนุญาตการใช้กล้อง หรือใช้ช่องวางลิงก์ QR', 'error');
+      } finally {
+        startCameraButton.disabled = scannerRunning;
+      }
+    }
+
+    async function stopCamera() {
+      if (scanner && scannerRunning) {
+        try { await scanner.stop(); } catch (error) {}
+      }
+      scannerRunning = false;
+      startCameraButton.disabled = false;
+      stopCameraButton.disabled = true;
+    }
+
+    async function inspectRunner(token) {
+      if (!credentials) return;
+      currentToken = token;
+      manualButton.disabled = true;
+      showMessage(scannerMessage, 'กำลังตรวจสอบข้อมูลผู้สมัคร');
+
+      try {
+        const data = await postToApi({
+          action: 'staff-runner-details',
+          staffName: credentials.staffName,
+          pin: credentials.pin,
+          token: token
+        });
+        scannerCard.hidden = true;
+        scannerMessage.hidden = true;
+        showRunner(data.runner);
+      } catch (error) {
+        showMessage(scannerMessage, error.message || 'ไม่สามารถตรวจสอบผู้สมัครได้', 'error');
+      } finally {
+        manualButton.disabled = false;
+      }
+    }
+
+    function showRunner(runner) {
+      const fullName = [runner.prefix, runner.firstName, runner.lastName]
+        .filter(Boolean)
+        .join(' ');
+      const checkedIn = runner.checkinStatus === 'CHECKED_IN';
+      const blocked = !runner.canCheckIn;
+      const iconClass = checkedIn ? ' warning' : (blocked ? ' error' : '');
+      const iconText = checkedIn ? '!' : (blocked ? '×' : '✓');
+      const heading = checkedIn ? 'เช็กอินแล้ว' : (blocked ? 'ไม่สามารถเช็กอินได้' : 'ตรวจสอบข้อมูลผู้สมัคร');
+      const statusMessage = blocked
+        ? '<p class="message ' + (checkedIn ? 'warning' : 'error') + '">' + escapeHtml(runner.blockReason || '-') + '</p>'
+        : '<p class="message">ตรวจสอบชื่อ หมายเลข BIB และระยะวิ่งก่อนกดยืนยัน</p>';
+      const checkinDetail = checkedIn
+        ? '<div class="detail"><span>เวลาเช็กอิน</span><strong>' + escapeHtml(runner.checkinAt || '-') + '</strong></div>' +
+          '<div class="detail"><span>ผู้เช็กอิน</span><strong>' + escapeHtml(runner.checkinBy || '-') + '</strong></div>'
+        : '';
+      const actionButton = runner.canCheckIn
+        ? '<button id="confirmCheckinButton" class="button" type="button">ยืนยันเช็กอิน</button>'
+        : '';
+
+      resultCard.hidden = false;
+      resultCard.innerHTML = '<div class="runner-result">' +
+        '<div class="status-icon' + iconClass + '">' + iconText + '</div>' +
+        '<h2 class="runner-title">' + heading + '</h2>' +
+        '<p class="runner-name">' + escapeHtml(fullName || '-') + '</p>' +
+        '<div class="details">' +
+          '<div class="detail bib"><span>หมายเลข BIB</span><strong>' + escapeHtml(runner.bibNumber || '-') + '</strong></div>' +
+          '<div class="detail"><span>ระยะวิ่ง</span><strong>' + escapeHtml(runner.distance || '-') + '</strong></div>' +
+          '<div class="detail"><span>เลขลงทะเบียน</span><strong>' + escapeHtml(runner.runnerId || '-') + '</strong></div>' +
+          checkinDetail +
+        '</div>' +
+        statusMessage +
+        '<div class="action-stack">' + actionButton +
+          '<button id="nextScanButton" class="button secondary" type="button">สแกนคนถัดไป</button>' +
+        '</div>' +
+      '</div>';
+
+      const confirmButton = document.getElementById('confirmCheckinButton');
+      if (confirmButton) confirmButton.addEventListener('click', confirmCheckin);
+      document.getElementById('nextScanButton').addEventListener('click', resetForNextScan);
+    }
+
+    async function confirmCheckin() {
+      const button = document.getElementById('confirmCheckinButton');
+      if (!button || !currentToken || !credentials) return;
+      button.disabled = true;
+      button.textContent = 'กำลังบันทึก...';
+
+      try {
+        const data = await postToApi({
+          action: 'staff-checkin',
+          staffName: credentials.staffName,
+          pin: credentials.pin,
+          token: currentToken
+        });
+        showCheckinSuccess(data.runner, Boolean(data.alreadyCheckedIn));
+      } catch (error) {
+        button.disabled = false;
+        button.textContent = 'ยืนยันเช็กอิน';
+        const oldMessage = resultCard.querySelector('.message');
+        if (oldMessage) {
+          oldMessage.className = 'message error';
+          oldMessage.textContent = error.message || 'บันทึกเช็กอินไม่สำเร็จ';
+        }
+      }
+    }
+
+    function showCheckinSuccess(runner, alreadyCheckedIn) {
+      const fullName = [runner.prefix, runner.firstName, runner.lastName]
+        .filter(Boolean)
+        .join(' ');
+      resultCard.innerHTML = '<div class="runner-result">' +
+        '<div class="status-icon">✓</div>' +
+        '<h2 class="runner-title">' + (alreadyCheckedIn ? 'เช็กอินไว้แล้ว' : 'เช็กอินสำเร็จ') + '</h2>' +
+        '<p class="runner-name">' + escapeHtml(fullName || '-') + '</p>' +
+        '<div class="details">' +
+          '<div class="detail bib"><span>หมายเลข BIB</span><strong>' + escapeHtml(runner.bibNumber || '-') + '</strong></div>' +
+          '<div class="detail"><span>ระยะวิ่ง</span><strong>' + escapeHtml(runner.distance || '-') + '</strong></div>' +
+          '<div class="detail"><span>เวลาเช็กอิน</span><strong>' + escapeHtml(runner.checkinAt || '-') + '</strong></div>' +
+          '<div class="detail"><span>ผู้เช็กอิน</span><strong>' + escapeHtml(runner.checkinBy || '-') + '</strong></div>' +
+        '</div>' +
+        '<button id="nextScanButton" class="button" type="button">สแกนคนถัดไป</button>' +
+      '</div>';
+      document.getElementById('nextScanButton').addEventListener('click', resetForNextScan);
+    }
+
+    async function resetForNextScan() {
+      currentToken = '';
+      manualToken.value = '';
+      resultCard.hidden = true;
+      resultCard.innerHTML = '';
+      scannerCard.hidden = false;
+      showMessage(scannerMessage, 'พร้อมสแกนคนถัดไป');
+      await startCamera();
+    }
+
+    async function postToApi(payload) {
+      const response = await fetch(WEB_APP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload),
+        cache: 'no-store',
+        redirect: 'follow'
+      });
+
+      if (!response.ok) throw new Error('ไม่สามารถเชื่อมต่อระบบได้');
+      const data = await response.json();
+      if (!data.success) throw new Error(data.message || 'ระบบทำรายการไม่สำเร็จ');
+      return data;
+    }
+
+    function extractToken(value) {
+      const text = String(value || '').trim();
+      const directMatch = text.match(/^[a-f0-9]{32}$/i);
+      if (directMatch) return directMatch[0].toLowerCase();
+      const urlMatch = text.match(/[?&]token=([a-f0-9]{32})(?:&|$)/i);
+      return urlMatch ? urlMatch[1].toLowerCase() : '';
+    }
+
+    function showMessage(element, message, tone) {
+      element.hidden = false;
+      element.innerHTML = '<p class="message' + (tone ? ' ' + tone : '') + '">' + escapeHtml(message) + '</p>';
+    }
+
+    function escapeHtml(value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>
