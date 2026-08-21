@@ -464,7 +464,7 @@
         return '<div class="summary-distance">' +
           '<span>' + distance + '</span>' +
           '<strong>' + nonNegativeNumber(item.checkedIn) + '</strong>' +
-          '<small>ผู้สมัคร ' + nonNegativeNumber(item.public) +
+          '<small>หน้าเว็บ ' + nonNegativeNumber(item.public) +
           ' · VIP ' + nonNegativeNumber(item.vip) + '</small>' +
         '</div>';
       }).join('');
@@ -476,7 +476,7 @@
           '<small>จากผู้สมัครที่ยังไม่ยกเลิก ' + totalRegistered + ' คน</small>' +
         '</div>' +
         '<div class="summary-grid">' + distanceCards + '</div>' +
-        '<p class="summary-breakdown">ผู้สมัคร ' + nonNegativeNumber(byType.PUBLIC) +
+        '<p class="summary-breakdown">ลงทะเบียนผ่านหน้าเว็บ ' + nonNegativeNumber(byType.PUBLIC) +
           ' คน · VIP ' + nonNegativeNumber(byType.VIP) +
           ' คน · อัปเดต ' + escapeHtml(updatedAt || '-') + '</p>' +
         (missingBib > 0
