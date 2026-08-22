@@ -4,7 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#087f5b">
-  <title>Staff Check-in | Healthy City</title>
+  <meta name="robots" content="noindex,nofollow">
+  <title>Staff Check-in และรับ BIB | Healthy City</title>
   <link rel="stylesheet" href="runner-fonts.css">
   <style>
     :root {
@@ -32,7 +33,7 @@
       background: var(--bg);
     }
 
-    button, input { font: inherit; }
+    button, input, select { font: inherit; }
 
     .topbar {
       display: flex;
@@ -72,7 +73,7 @@
     .field { margin-bottom: 15px; }
     label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; }
 
-    input {
+    input, select {
       width: 100%;
       min-height: 50px;
       padding: 11px 14px;
@@ -83,7 +84,8 @@
       outline: none;
     }
 
-    input:focus { border-color: var(--green); box-shadow: 0 0 0 4px rgba(8, 127, 91, .1); }
+    input:focus, select:focus { border-color: var(--green); box-shadow: 0 0 0 4px rgba(8, 127, 91, .1); }
+    input[readonly] { background: #eef5f3; }
 
     .button {
       width: 100%;
@@ -148,6 +150,24 @@
     .summary-distance small { display: block; color: var(--muted); font-size: 10px; line-height: 1.4; }
     .summary-breakdown { margin: 10px 0 0; color: var(--muted); font-size: 12px; text-align: center; }
     .summary-warning { margin-top: 10px; padding: 10px 12px; color: var(--warning); font-size: 12px; text-align: center; background: var(--warning-bg); border-radius: 10px; }
+
+    .mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+    .mode-option { position: relative; cursor: pointer; }
+    .mode-option input { position: absolute; opacity: 0; pointer-events: none; }
+    .mode-option span {
+      display: block;
+      min-height: 88px;
+      padding: 13px;
+      font-size: 14px;
+      font-weight: 600;
+      background: #f4f8f6;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+    }
+    .mode-option small { display: block; margin-top: 4px; color: var(--muted); font-size: 11px; font-weight: 400; line-height: 1.45; }
+    .mode-option input:checked + span { background: var(--success-bg); border-color: var(--green); box-shadow: 0 0 0 2px rgba(8, 127, 91, .1); }
+    .bib-settings { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
+    .pool-summary { margin-top: 11px; padding: 12px 14px; color: var(--ink); font-size: 13px; text-align: center; background: var(--success-bg); border-radius: 11px; }
 
     .scanner-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
     #reader { overflow: hidden; margin-top: 14px; border-radius: 15px; }
@@ -218,6 +238,8 @@
     .detail span { display: block; color: var(--muted); font-size: 11px; }
     .detail strong { display: block; margin-top: 2px; font-size: 17px; }
     .detail.bib strong { color: var(--green); font-size: 25px; }
+    .bib-entry { text-align: left; }
+    .bib-help { margin: 7px 0 0; color: var(--muted); font-size: 12px; line-height: 1.5; }
     .action-stack { display: grid; gap: 9px; }
     .privacy { margin: 14px 0 0; color: var(--muted); font-size: 11px; line-height: 1.55; text-align: center; }
     [hidden] { display: none !important; }
@@ -231,6 +253,7 @@
       .search-result { grid-template-columns: 1fr; }
       .search-result .button { width: 100%; }
       .summary-grid { grid-template-columns: 1fr; }
+      .mode-grid { grid-template-columns: 1fr; }
       .summary-distance { display: grid; grid-template-columns: 1fr auto; align-items: center; text-align: left; }
       .summary-distance strong { grid-row: span 2; }
     }
@@ -247,8 +270,8 @@
   <main class="page">
     <section class="hero">
       <p class="eyebrow">RUN AROUND THE CITY</p>
-      <h1>Staff Check-in</h1>
-      <p>สแกน QR Code และยืนยันผู้เข้าร่วมงาน</p>
+      <h1>Staff Check-in และรับ BIB</h1>
+      <p>รับ BIB สแกน QR Code และยืนยันผู้เข้าร่วมงาน</p>
     </section>
 
     <section id="loginCard" class="card">
@@ -260,7 +283,7 @@
           <input id="staffName" name="staffName" autocomplete="name" maxlength="80" required>
         </div>
         <div class="field">
-          <label for="staffPin">รหัส Staff Check-in</label>
+          <label for="staffPin">รหัส Staff Check-in และรับ BIB</label>
           <input id="staffPin" name="staffPin" type="password" inputmode="text" autocomplete="off" minlength="8" maxlength="32" required>
         </div>
         <button id="loginButton" class="button" type="submit">เข้าสู่ระบบ</button>
@@ -277,6 +300,34 @@
         <button id="logoutButton" class="button danger logout" type="button">ออกจากระบบ</button>
       </div>
 
+      <section id="operationCard" class="card">
+        <h2>เลือกการทำงาน</h2>
+        <p class="description">กำหนดโหมดของโทรศัพท์เครื่องนี้ก่อนเริ่มทำรายการ</p>
+        <div class="mode-grid">
+          <label class="mode-option">
+            <input type="radio" name="operationMode" value="CHECKIN" checked>
+            <span>เช็กอินอย่างเดียว<small>สำหรับผู้ที่มี BIB แล้ว</small></span>
+          </label>
+          <label class="mode-option">
+            <input type="radio" name="operationMode" value="PRE_EVENT">
+            <span>รับ BIB ก่อนวันงาน<small>ส่งมอบ BIB แต่ยังไม่เช็กอิน</small></span>
+          </label>
+          <label class="mode-option">
+            <input type="radio" name="operationMode" value="EVENT_DAY">
+            <span>รับ BIB วันงาน<small>ส่งมอบ BIB และเช็กอินพร้อมกัน</small></span>
+          </label>
+        </div>
+        <div id="bibSettings" class="bib-settings" hidden>
+          <div class="field">
+            <label for="traySelect">กอง BIB ประจำจุด</label>
+            <select id="traySelect">
+              <option value="">กำลังโหลดคลัง BIB</option>
+            </select>
+          </div>
+          <div id="poolSummary" class="pool-summary">กำลังโหลดจำนวน BIB ว่าง</div>
+        </div>
+      </section>
+
       <section id="summaryCard" class="card">
         <div class="summary-header">
           <h2>สรุปผู้เช็กอิน</h2>
@@ -288,8 +339,8 @@
       </section>
 
       <section id="scannerCard" class="card">
-        <h2>สแกน QR Code</h2>
-        <p class="description">กดเปิดกล้อง แล้วส่อง QR Code ของผู้สมัครให้อยู่กลางกรอบ</p>
+        <h2 id="scannerTitle">สแกน QR Code</h2>
+        <p id="scannerDescription" class="description">กดเปิดกล้อง แล้วส่อง QR Code ของผู้สมัครให้อยู่กลางกรอบ</p>
         <div class="scanner-actions">
           <button id="startCameraButton" class="button" type="button">เปิดกล้อง</button>
           <button id="stopCameraButton" class="button secondary" type="button" disabled>ปิดกล้อง</button>
@@ -326,9 +377,16 @@
     const checkinArea = document.getElementById('checkinArea');
     const activeStaffName = document.getElementById('activeStaffName');
     const logoutButton = document.getElementById('logoutButton');
+    const operationCard = document.getElementById('operationCard');
+    const bibSettings = document.getElementById('bibSettings');
+    const traySelect = document.getElementById('traySelect');
+    const poolSummary = document.getElementById('poolSummary');
+    const summaryCard = document.getElementById('summaryCard');
     const refreshSummaryButton = document.getElementById('refreshSummaryButton');
     const checkinSummary = document.getElementById('checkinSummary');
     const scannerCard = document.getElementById('scannerCard');
+    const scannerTitle = document.getElementById('scannerTitle');
+    const scannerDescription = document.getElementById('scannerDescription');
     const startCameraButton = document.getElementById('startCameraButton');
     const stopCameraButton = document.getElementById('stopCameraButton');
     const scannerMessage = document.getElementById('scannerMessage');
@@ -346,6 +404,7 @@
     let currentToken = '';
     let currentRunnerId = '';
     let currentMethod = 'QR';
+    let currentSuggestedBib = '';
 
     loginForm.addEventListener('submit', async function (event) {
       event.preventDefault();
@@ -374,9 +433,10 @@
         currentToken = '';
         currentRunnerId = '';
         currentMethod = 'QR';
+        currentSuggestedBib = '';
         loginMessage.hidden = true;
-        showMessage(scannerMessage, 'พร้อมสแกน กดเปิดกล้องเพื่อเริ่มใช้งาน');
-        loadCheckinSummary();
+        restoreOperationSettings();
+        applyOperationMode();
       } catch (error) {
         showMessage(loginMessage, error.message || 'เข้าสู่ระบบไม่สำเร็จ', 'error');
       } finally {
@@ -389,6 +449,8 @@
       await stopCamera();
       credentials = null;
       currentToken = '';
+      currentRunnerId = '';
+      currentSuggestedBib = '';
       document.getElementById('staffPin').value = '';
       checkinArea.hidden = true;
       loginCard.hidden = false;
@@ -406,6 +468,17 @@
     refreshSummaryButton.addEventListener('click', loadCheckinSummary);
     startCameraButton.addEventListener('click', startCamera);
     stopCameraButton.addEventListener('click', stopCamera);
+    document.querySelectorAll('input[name="operationMode"]').forEach(function (input) {
+      input.addEventListener('change', async function () {
+        localStorage.setItem('healthyCityStaffMode', getOperationMode());
+        await stopCamera();
+        clearCurrentRunner();
+        applyOperationMode();
+      });
+    });
+    traySelect.addEventListener('change', function () {
+      localStorage.setItem('healthyCityBibTray', traySelect.value);
+    });
 
     manualButton.addEventListener('click', async function () {
       const token = extractToken(manualToken.value);
@@ -430,6 +503,80 @@
         staffSearchButton.click();
       }
     });
+
+    function restoreOperationSettings() {
+      const savedMode = localStorage.getItem('healthyCityStaffMode');
+      const modeInput = document.querySelector(
+        'input[name="operationMode"][value="' + (savedMode || 'CHECKIN') + '"]'
+      );
+      if (modeInput) modeInput.checked = true;
+    }
+
+    function getOperationMode() {
+      const selected = document.querySelector('input[name="operationMode"]:checked');
+      return selected ? selected.value : 'CHECKIN';
+    }
+
+    function applyOperationMode() {
+      const mode = getOperationMode();
+      const checkinOnly = mode === 'CHECKIN';
+      summaryCard.hidden = !checkinOnly;
+      bibSettings.hidden = checkinOnly;
+      scannerTitle.textContent = checkinOnly ? 'สแกน QR Code' : 'ค้นหาหรือสแกนผู้รับ BIB';
+      scannerDescription.textContent = checkinOnly
+        ? 'กดเปิดกล้อง แล้วส่อง QR Code ของผู้สมัครให้อยู่กลางกรอบ'
+        : 'ตรวจสอบกอง BIB ให้ตรงกับระยะ ก่อนค้นหาหรือสแกนผู้สมัคร';
+      showMessage(
+        scannerMessage,
+        checkinOnly
+          ? 'พร้อมเช็กอิน กดเปิดกล้องเพื่อเริ่มใช้งาน'
+          : (mode === 'EVENT_DAY'
+              ? 'พร้อมส่งมอบ BIB และเช็กอินพร้อมกัน'
+              : 'พร้อมส่งมอบ BIB ก่อนวันงาน')
+      );
+      if (checkinOnly) {
+        loadCheckinSummary();
+      } else {
+        loadBibOptions();
+      }
+    }
+
+    async function loadBibOptions() {
+      if (!credentials) return;
+      const selectedTray = traySelect.value || localStorage.getItem('healthyCityBibTray') || '';
+      traySelect.disabled = true;
+      poolSummary.textContent = 'กำลังโหลดจำนวน BIB ว่าง';
+      try {
+        const data = await postToApi({
+          action: 'staff-bib-options',
+          staffName: credentials.staffName,
+          pin: credentials.pin
+        });
+        const trays = Array.isArray(data.trays) ? data.trays : [];
+        traySelect.innerHTML = '<option value="">เลือกกอง BIB ประจำจุด</option>' +
+          trays.map(function (item) {
+            const value = String(item.tray || '');
+            return '<option value="' + escapeHtml(value) + '">' +
+              escapeHtml(item.distance || '-') + ' · ' + escapeHtml(value || '-') +
+              ' · ว่าง ' + nonNegativeNumber(item.available) +
+              ' · ใบถัดไป ' + escapeHtml(item.nextBib || '-') + '</option>';
+          }).join('') +
+          '<option value="VIP">VIP เลขกำหนดไว้แล้ว</option>';
+        if (selectedTray && Array.from(traySelect.options).some(function (option) {
+          return option.value === selectedTray;
+        })) {
+          traySelect.value = selectedTray;
+        }
+        poolSummary.textContent = trays.length
+          ? 'BIB ผู้สมัครว่างทั้งหมด ' + nonNegativeNumber(data.totalAvailable) + ' ใบ'
+          : 'ยังไม่มี BIB ที่พร้อมส่งมอบ กรุณาตรวจ Tab BIB_POOL';
+      } catch (error) {
+        traySelect.innerHTML = '<option value="">ไม่สามารถโหลดกอง BIB</option>';
+        showMessage(poolSummary, error.message || 'โหลดคลัง BIB ไม่สำเร็จ', 'error');
+      } finally {
+        traySelect.disabled = false;
+      }
+    }
 
     async function loadCheckinSummary() {
       if (!credentials) return;
@@ -615,20 +762,27 @@
       currentToken = String(reference && reference.token ? reference.token : '');
       currentRunnerId = String(reference && reference.runnerId ? reference.runnerId : '');
       currentMethod = String(reference && reference.method ? reference.method : 'QR');
+      currentSuggestedBib = '';
       manualButton.disabled = true;
       showMessage(scannerMessage, 'กำลังตรวจสอบข้อมูลผู้สมัคร');
 
       try {
+        const checkinOnly = getOperationMode() === 'CHECKIN';
         const data = await postToApi({
-          action: 'staff-runner-details',
+          action: checkinOnly ? 'staff-runner-details' : 'staff-bib-details',
           staffName: credentials.staffName,
           pin: credentials.pin,
           token: currentToken,
-          runnerId: currentRunnerId
+          runnerId: currentRunnerId,
+          tray: checkinOnly ? '' : traySelect.value
         });
         scannerCard.hidden = true;
         scannerMessage.hidden = true;
-        showRunner(data.runner);
+        if (checkinOnly) {
+          showCheckinRunner(data.runner || {});
+        } else {
+          showHandoverRunner(data.runner || {});
+        }
       } catch (error) {
         showMessage(scannerMessage, error.message || 'ไม่สามารถตรวจสอบผู้สมัครได้', 'error');
       } finally {
@@ -636,7 +790,7 @@
       }
     }
 
-    function showRunner(runner) {
+    function showCheckinRunner(runner) {
       const fullName = [runner.prefix, runner.firstName, runner.lastName]
         .filter(Boolean)
         .join(' ');
@@ -676,6 +830,107 @@
       const confirmButton = document.getElementById('confirmCheckinButton');
       if (confirmButton) confirmButton.addEventListener('click', confirmCheckin);
       document.getElementById('nextScanButton').addEventListener('click', resetForNextScan);
+    }
+
+    function showHandoverRunner(runner) {
+      const fullName = [runner.prefix, runner.firstName, runner.lastName]
+        .filter(Boolean)
+        .join(' ');
+      const blocked = !runner.canReceive;
+      const bibNumber = runner.bibNumber || runner.suggestedBib || '';
+      const hasFixedBib = Boolean(runner.bibNumber);
+      currentSuggestedBib = bibNumber;
+      resultCard.hidden = false;
+      resultCard.innerHTML = '<div class="runner-result">' +
+        '<div class="status-icon' + (blocked ? ' error' : '') + '">' + (blocked ? '×' : '✓') + '</div>' +
+        '<h2 class="runner-title">' + (blocked ? 'ไม่สามารถส่งมอบ BIB ได้' : 'ตรวจสอบก่อนส่งมอบ BIB') + '</h2>' +
+        '<p class="runner-name">' + escapeHtml(fullName || '-') + '</p>' +
+        '<div class="details">' +
+          '<div class="detail bib"><span>หมายเลข BIB</span><strong>' + escapeHtml(bibNumber || '-') + '</strong></div>' +
+          '<div class="detail"><span>ระยะวิ่ง</span><strong>' + escapeHtml(runner.distance || '-') + '</strong></div>' +
+          '<div class="detail"><span>ประเภท</span><strong>' + escapeHtml(runner.registrationType === 'VIP' ? 'VIP' : 'ผู้สมัคร') + '</strong></div>' +
+          '<div class="detail"><span>กอง BIB</span><strong>' + escapeHtml(runner.tray || traySelect.value || '-') + '</strong></div>' +
+        '</div>' +
+        (blocked
+          ? '<p class="message error">' + escapeHtml(runner.blockReason || '-') + '</p>'
+          : '<div class="bib-entry"><label for="bibNumberInput">เลขบน BIB ที่ถืออยู่</label>' +
+            '<input id="bibNumberInput" value="' + escapeHtml(bibNumber) + '" ' + (hasFixedBib ? 'readonly' : '') + '>' +
+            '<p class="bib-help">ระบบเสนอเลขถัดไป หากเลขบนใบไม่ตรงให้แก้ช่องนี้ก่อนยืนยัน</p></div>') +
+        '<div class="action-stack">' +
+          (blocked ? '' : '<button id="confirmHandoverButton" class="button" type="button">' +
+            (getOperationMode() === 'EVENT_DAY' ? 'ยืนยันส่งมอบ BIB และเช็กอิน' : 'ยืนยันส่งมอบ BIB') + '</button>') +
+          '<button id="nextScanButton" class="button secondary" type="button">สแกนคนถัดไป</button>' +
+        '</div></div>';
+
+      const confirmButton = document.getElementById('confirmHandoverButton');
+      if (confirmButton) confirmButton.addEventListener('click', confirmHandover);
+      document.getElementById('nextScanButton').addEventListener('click', resetForNextScan);
+    }
+
+    async function confirmHandover() {
+      const button = document.getElementById('confirmHandoverButton');
+      const bibInput = document.getElementById('bibNumberInput');
+      if (!button || !bibInput || (!currentToken && !currentRunnerId) || !credentials) return;
+      const bibNumber = bibInput.value.trim();
+      if (!bibNumber) {
+        bibInput.focus();
+        return;
+      }
+
+      button.disabled = true;
+      button.textContent = 'กำลังบันทึก...';
+      try {
+        const data = await postToApi({
+          action: 'staff-bib-handover',
+          staffName: credentials.staffName,
+          pin: credentials.pin,
+          token: currentToken,
+          runnerId: currentRunnerId,
+          tray: traySelect.value,
+          bibNumber: bibNumber,
+          handoverMode: getOperationMode()
+        });
+        showHandoverSuccess(data.runner || {}, Boolean(data.alreadyReceived));
+      } catch (error) {
+        button.disabled = false;
+        button.textContent = getOperationMode() === 'EVENT_DAY'
+          ? 'ยืนยันส่งมอบ BIB และเช็กอิน'
+          : 'ยืนยันส่งมอบ BIB';
+        const oldMessage = resultCard.querySelector('.message');
+        if (oldMessage) {
+          oldMessage.className = 'message error';
+          oldMessage.textContent = error.message || 'บันทึกส่งมอบ BIB ไม่สำเร็จ';
+        } else {
+          const message = document.createElement('p');
+          message.className = 'message error';
+          message.textContent = error.message || 'บันทึกส่งมอบ BIB ไม่สำเร็จ';
+          resultCard.querySelector('.runner-result').appendChild(message);
+        }
+      }
+    }
+
+    function showHandoverSuccess(runner, alreadyReceived) {
+      const fullName = [runner.prefix, runner.firstName, runner.lastName]
+        .filter(Boolean)
+        .join(' ');
+      const eventDay = getOperationMode() === 'EVENT_DAY';
+      resultCard.innerHTML = '<div class="runner-result">' +
+        '<div class="status-icon">✓</div>' +
+        '<h2 class="runner-title">' + (alreadyReceived
+          ? 'ส่งมอบ BIB แล้ว'
+          : (eventDay ? 'ส่งมอบ BIB และเช็กอินสำเร็จ' : 'ส่งมอบ BIB สำเร็จ')) + '</h2>' +
+        '<p class="runner-name">' + escapeHtml(fullName || '-') + '</p>' +
+        '<div class="details">' +
+          '<div class="detail bib"><span>หมายเลข BIB</span><strong>' + escapeHtml(runner.bibNumber || '-') + '</strong></div>' +
+          '<div class="detail"><span>ระยะวิ่ง</span><strong>' + escapeHtml(runner.distance || '-') + '</strong></div>' +
+          '<div class="detail"><span>เวลาส่งมอบ</span><strong>' + escapeHtml(runner.bibHandoverAt || '-') + '</strong></div>' +
+          '<div class="detail"><span>ผู้ส่งมอบ</span><strong>' + escapeHtml(runner.bibHandoverBy || '-') + '</strong></div>' +
+        '</div>' +
+        '<button id="nextScanButton" class="button" type="button">สแกนคนถัดไป</button>' +
+      '</div>';
+      document.getElementById('nextScanButton').addEventListener('click', resetForNextScan);
+      loadBibOptions();
+      if (eventDay) loadCheckinSummary();
     }
 
     async function confirmCheckin() {
@@ -725,10 +980,11 @@
       loadCheckinSummary();
     }
 
-    async function resetForNextScan() {
+    function clearCurrentRunner() {
       currentToken = '';
       currentRunnerId = '';
       currentMethod = 'QR';
+      currentSuggestedBib = '';
       manualToken.value = '';
       staffSearchQuery.value = '';
       staffSearchResults.hidden = true;
@@ -736,6 +992,11 @@
       resultCard.hidden = true;
       resultCard.innerHTML = '';
       scannerCard.hidden = false;
+    }
+
+    async function resetForNextScan() {
+      clearCurrentRunner();
+      if (getOperationMode() !== 'CHECKIN') await loadBibOptions();
       showMessage(scannerMessage, 'พร้อมสแกนคนถัดไป');
       await startCamera();
     }
