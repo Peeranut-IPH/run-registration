@@ -113,7 +113,7 @@
         const fullName = [runner.prefix, runner.firstName, runner.lastName]
           .filter(Boolean)
           .join(' ');
-        const bibNumber = runner.bibNumber || 'จะแจ้งให้ทราบภายหลัง';
+        const bibNumber = runner.bibNumber || 'กำหนดเมื่อรับ BIB';
 
         return '<article class="runner">' +
           '<h3 class="runner-name">' + escapeHtml(fullName || 'ผู้สมัคร') + '</h3>' +
@@ -159,7 +159,7 @@
       const fullName = [runner.prefix, runner.firstName, runner.lastName]
         .filter(Boolean)
         .join(' ');
-      const bibNumber = runner.bibNumber || 'จะแจ้งให้ทราบภายหลัง';
+      const bibNumber = runner.bibNumber || 'กำหนดเมื่อรับ BIB';
       const affiliationDetail = runner.affiliation
         ? '<div class="detail"><dt>หน่วยสังกัด</dt><dd>' + escapeHtml(runner.affiliation) + '</dd></div>'
         : '';
