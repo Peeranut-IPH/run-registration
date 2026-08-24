@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#087f5b">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Self Check-in | Healthy City</title>
+  <link rel="stylesheet" href="runner-fonts.css">
+  <style>
+    :root {
+      --green: #087f5b;
+      --green-dark: #006b4d;
+      --ink: #153d34;
+      --muted: #60736e;
+      --line: #d8e7e2;
+      --surface: #fff;
+      --bg: #f2f7f5;
+      --success-bg: #e8f8f1;
+      --warning: #a96500;
+      --warning-bg: #fff7e8;
+      --danger: #c7353f;
+      --danger-bg: #fff1f2;
+    }
+
+    * { box-sizing: border-box; }
+    [hidden] { display: none !important; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: "Kanit", Tahoma, sans-serif;
+      background: var(--bg);
+    }
+
+    button, input { font: inherit; }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      min-height: 64px;
+      padding: 12px max(16px, calc((100vw - 760px) / 2));
+      color: #fff;
+      background: var(--green);
+    }
+
+    .brand { font-size: 15px; font-weight: 600; letter-spacing: .4px; }
+    .topbar small { display: block; margin-top: 2px; opacity: .82; }
+
+    .page {
+      width: min(100% - 24px, 720px);
+      margin: 0 auto;
+      padding: 24px 0 42px;
+    }
+
+    .hero { margin-bottom: 18px; text-align: center; }
+    .eyebrow { margin: 0; color: var(--green); font-size: 11px; font-weight: 600; letter-spacing: 2px; }
+    h1 { margin: 7px 0 4px; font-size: clamp(30px, 8vw, 44px); font-weight: 600; line-height: 1.15; }
+    .hero p:last-child { margin: 0; color: var(--muted); font-size: 14px; }
+
+    .card {
+      padding: 22px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      box-shadow: 0 16px 38px rgba(20, 74, 62, .08);
+    }
+
+    .card + .card { margin-top: 16px; }
+    .card h2 { margin: 0 0 7px; font-size: 22px; font-weight: 600; }
+    .description { margin: 0 0 18px; color: var(--muted); font-size: 13px; line-height: 1.65; }
+    .field { margin-bottom: 15px; }
+    label { display: block; margin-bottom: 6px; font-size: 14px; font-weight: 500; }
+
+    input {
+      width: 100%;
+      min-height: 54px;
+      padding: 12px 15px;
+      color: var(--ink);
+      background: #fff;
+      border: 1px solid #b6d4ca;
+      border-radius: 12px;
+      outline: none;
+    }
+
+    input:focus { border-color: var(--green); box-shadow: 0 0 0 4px rgba(8, 127, 91, .1); }
+
+    .button {
+      width: 100%;
+      min-height: 52px;
+      padding: 11px 16px;
+      color: #fff;
+      font-weight: 500;
+      background: var(--green);
+      border: 0;
+      border-radius: 12px;
+      cursor: pointer;
+    }
+
+    .button:hover { background: var(--green-dark); }
+    .button:disabled { opacity: .58; cursor: wait; }
+    .button.secondary { color: var(--green); background: #fff; border: 1px solid var(--green); }
+    .button.secondary:hover { color: #fff; background: var(--green); }
+    .button.danger { width: auto; min-height: 38px; color: var(--danger); background: var(--danger-bg); border: 1px solid #efc6ca; }
+
+    .station-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+      padding: 12px 14px;
+      background: var(--success-bg);
+      border: 1px solid #cdeade;
+      border-radius: 14px;
+    }
+
+    .station-bar span { display: block; color: var(--muted); font-size: 11px; }
+    .station-bar strong { display: block; font-size: 15px; }
+
+    .kiosk-card { text-align: center; }
+    .scan-title { margin: 0; font-size: clamp(24px, 6vw, 34px); }
+    .scan-help { margin: 7px 0 17px; color: var(--muted); font-size: 14px; }
+    .camera-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    #reader { overflow: hidden; margin-top: 16px; border-radius: 18px; background: #0c1714; }
+    #reader video { border-radius: 16px; }
+
+    .message {
+      margin: 14px 0 0;
+      padding: 13px 15px;
+      color: var(--ink);
+      text-align: center;
+      background: #eef6f3;
+      border-radius: 12px;
+    }
+
+    .message.error { color: var(--danger); background: var(--danger-bg); }
+    .message.warning { color: var(--warning); background: var(--warning-bg); }
+
+    details {
+      margin-top: 18px;
+      padding-top: 17px;
+      text-align: left;
+      border-top: 1px solid var(--line);
+    }
+
+    summary { color: var(--green); font-weight: 500; cursor: pointer; }
+    .fallback-grid { display: grid; grid-template-columns: 1fr 150px; gap: 10px; margin-top: 14px; }
+    .fallback-grid .button { grid-column: 1 / -1; }
+
+    .result {
+      padding: 28px 20px;
+      text-align: center;
+    }
+
+    .status-icon {
+      display: grid;
+      width: 82px;
+      height: 82px;
+      margin: 0 auto 15px;
+      place-items: center;
+      color: #fff;
+      font-size: 48px;
+      line-height: 1;
+      background: var(--green);
+      border-radius: 50%;
+      box-shadow: 0 14px 28px rgba(8, 127, 91, .18);
+    }
+
+    .result.warning .status-icon { background: #ee9b13; }
+    .result.error .status-icon { background: var(--danger); }
+    .result h2 { margin: 0 0 8px; font-size: clamp(28px, 8vw, 42px); }
+    .runner-name { margin: 0 0 18px; color: var(--muted); font-size: clamp(18px, 5vw, 24px); }
+    .details { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; text-align: left; }
+    .detail { padding: 14px; background: #f3f7f5; border-radius: 13px; }
+    .detail span { display: block; color: var(--muted); font-size: 11px; }
+    .detail strong { display: block; margin-top: 4px; font-size: 20px; }
+    .countdown { margin: 18px 0 0; color: var(--muted); font-size: 13px; }
+
+    .privacy-note { margin: 14px 0 0; color: var(--muted); font-size: 11px; text-align: center; }
+
+    @media (max-width: 560px) {
+      .page { width: min(100% - 16px, 720px); padding-top: 14px; }
+      .card { padding: 17px; border-radius: 18px; }
+      .camera-actions, .fallback-grid, .details { grid-template-columns: 1fr; }
+      .fallback-grid .button { grid-column: auto; }
+      .topbar { min-height: 56px; }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <div class="brand">HEALTHY CITY · วิ่งล้อมเมือง</div>
+      <small>จุดเช็กอินด้วยตนเอง</small>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="hero">
+      <p class="eyebrow">RUN AROUND THE CITY</p>
+      <h1>Self Check-in</h1>
+      <p>ยก QR Code ให้กล้อง แล้วรอหน้าจอสีเขียว</p>
+    </section>
+
+    <section id="unlockCard" class="card">
+      <h2>เปิดจุด Self Check-in</h2>
+      <p class="description">เจ้าหน้าที่ตั้งชื่อจุดและกรอกรหัสเพียงครั้งเดียวก่อนเริ่มให้บริการ</p>
+      <form id="unlockForm">
+        <div class="field">
+          <label for="stationName">ชื่อจุดบริการ</label>
+          <input id="stationName" maxlength="80" value="Self Check-in 1" autocomplete="off" required>
+        </div>
+        <div class="field">
+          <label for="stationPin">รหัส Staff Check-in</label>
+          <input id="stationPin" type="password" minlength="8" maxlength="32" autocomplete="off" required>
+        </div>
+        <button id="unlockButton" class="button" type="submit">เปิดจุดเช็กอิน</button>
+      </form>
+      <div id="unlockMessage" aria-live="polite" hidden></div>
+    </section>
+
+    <section id="kioskArea" hidden>
+      <div class="station-bar">
+        <div>
+          <span>จุดที่กำลังใช้งาน</span>
+          <strong id="activeStationName"></strong>
+        </div>
+        <button id="lockButton" class="button danger" type="button">ล็อกเครื่อง</button>
+      </div>
+
+      <section id="scannerCard" class="card kiosk-card">
+        <h2 class="scan-title">สแกน QR Code</h2>
+        <p class="scan-help">แสดง QR จากอีเมลหรือหน้าข้อมูลการลงทะเบียนให้กล้อง</p>
+        <div class="camera-actions">
+          <button id="startCameraButton" class="button" type="button">เปิดกล้อง</button>
+          <button id="fullscreenButton" class="button secondary" type="button">เต็มหน้าจอ</button>
+        </div>
+        <div id="reader"></div>
+        <div id="scannerMessage" aria-live="polite">
+          <p class="message">กดเปิดกล้องเพื่อเริ่มใช้งาน</p>
+        </div>
+
+        <details id="fallbackDetails">
+          <summary>ไม่มี QR ใช้หมายเลข BIB แทน</summary>
+          <p class="description">กรอก BIB และโทรศัพท์ 4 ตัวท้ายของผู้สมัคร</p>
+          <form id="fallbackForm" class="fallback-grid">
+            <input id="bibNumber" aria-label="หมายเลข BIB" placeholder="หมายเลข BIB" autocomplete="off" required>
+            <input id="phoneLast4" aria-label="โทรศัพท์ 4 ตัวท้าย" placeholder="โทรศัพท์ 4 ตัวท้าย" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" autocomplete="off" required>
+            <button id="fallbackButton" class="button secondary" type="submit">เช็กอินด้วย BIB</button>
+          </form>
+          <div id="fallbackMessage" aria-live="polite" hidden></div>
+        </details>
+        <p class="privacy-note">หน้าจอนี้เช็กอินได้อย่างเดียว ไม่สามารถกำหนดหรือแก้ไข BIB</p>
+      </section>
+
+      <section id="resultCard" class="card" aria-live="assertive" hidden></section>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+  <script>
+    const WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbz1IH-RT9X1-ilpni6YQUf0OSOhnWHYi_dxBUuKFxg1UXVMZ0C-xjmSi99YsB6pORqdmw/exec';
+    const unlockCard = document.getElementById('unlockCard');
+    const unlockForm = document.getElementById('unlockForm');
+    const unlockButton = document.getElementById('unlockButton');
+    const unlockMessage = document.getElementById('unlockMessage');
+    const stationNameInput = document.getElementById('stationName');
+    const stationPinInput = document.getElementById('stationPin');
+    const kioskArea = document.getElementById('kioskArea');
+    const activeStationName = document.getElementById('activeStationName');
+    const lockButton = document.getElementById('lockButton');
+    const scannerCard = document.getElementById('scannerCard');
+    const startCameraButton = document.getElementById('startCameraButton');
+    const fullscreenButton = document.getElementById('fullscreenButton');
+    const scannerMessage = document.getElementById('scannerMessage');
+    const fallbackDetails = document.getElementById('fallbackDetails');
+    const fallbackForm = document.getElementById('fallbackForm');
+    const fallbackButton = document.getElementById('fallbackButton');
+    const fallbackMessage = document.getElementById('fallbackMessage');
+    const bibNumberInput = document.getElementById('bibNumber');
+    const phoneLast4Input = document.getElementById('phoneLast4');
+    const resultCard = document.getElementById('resultCard');
+
+    let credentials = null;
+    let scanner = null;
+    let scannerRunning = false;
+    let processing = false;
+    let resetTimer = null;
+    let countdownTimer = null;
+    let wakeLock = null;
+    let lastScanValue = '';
+    let lastScanAt = 0;
+
+    stationNameInput.value = localStorage.getItem('healthyCitySelfCheckinStation') || 'Self Check-in 1';
+
+    unlockForm.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      if (!unlockForm.reportValidity()) return;
+
+      const stationName = stationNameInput.value.trim();
+      const pin = stationPinInput.value.trim();
+      unlockButton.disabled = true;
+      unlockButton.textContent = 'กำลังตรวจสอบ...';
+      showMessage(unlockMessage, 'กำลังตรวจสอบรหัส');
+
+      try {
+        const data = await postToApi({
+          action: 'staff-checkin-auth',
+          staffName: stationName,
+          pin: pin
+        });
+        credentials = { staffName: data.staffName || stationName, pin: pin };
+        localStorage.setItem('healthyCitySelfCheckinStation', credentials.staffName);
+        activeStationName.textContent = credentials.staffName;
+        unlockCard.hidden = true;
+        kioskArea.hidden = false;
+        unlockMessage.hidden = true;
+        await requestWakeLock();
+        await startCamera();
+      } catch (error) {
+        showMessage(unlockMessage, error.message || 'เปิดจุดเช็กอินไม่สำเร็จ', 'error');
+      } finally {
+        unlockButton.disabled = false;
+        unlockButton.textContent = 'เปิดจุดเช็กอิน';
+      }
+    });
+
+    lockButton.addEventListener('click', async function () {
+      clearTimers();
+      await stopCamera();
+      await releaseWakeLock();
+      credentials = null;
+      stationPinInput.value = '';
+      kioskArea.hidden = true;
+      unlockCard.hidden = false;
+      resultCard.hidden = true;
+      scannerCard.hidden = false;
+      fallbackForm.reset();
+      fallbackMessage.hidden = true;
+    });
+
+    startCameraButton.addEventListener('click', startCamera);
+    fullscreenButton.addEventListener('click', toggleFullscreen);
+
+    fallbackForm.addEventListener('submit', async function (event) {
+      event.preventDefault();
+      if (!fallbackForm.reportValidity() || processing || !credentials) return;
+      processing = true;
+      fallbackButton.disabled = true;
+      showMessage(fallbackMessage, 'กำลังตรวจสอบข้อมูล');
+      await processCheckin({
+        bibNumber: bibNumberInput.value.trim(),
+        phoneLast4: phoneLast4Input.value.trim()
+      });
+      fallbackButton.disabled = false;
+    });
+
+    phoneLast4Input.addEventListener('input', function () {
+      phoneLast4Input.value = phoneLast4Input.value.replace(/\D/g, '').slice(0, 4);
+    });
+
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'visible' && credentials) requestWakeLock();
+    });
+
+    async function startCamera() {
+      if (!credentials || scannerRunning || processing) return;
+      if (typeof Html5Qrcode === 'undefined') {
+        showMessage(scannerMessage, 'โหลดระบบกล้องไม่สำเร็จ กรุณาใช้หมายเลข BIB', 'error');
+        fallbackDetails.open = true;
+        return;
+      }
+
+      startCameraButton.disabled = true;
+      showMessage(scannerMessage, 'กำลังเปิดกล้อง กรุณาอนุญาตการใช้กล้อง');
+
+      try {
+        scanner = scanner || new Html5Qrcode('reader');
+        await scanner.start(
+          { facingMode: 'environment' },
+          {
+            fps: 12,
+            qrbox: function (viewfinderWidth, viewfinderHeight) {
+              const size = Math.floor(Math.min(viewfinderWidth, viewfinderHeight) * .72);
+              return { width: size, height: size };
+            },
+            aspectRatio: 1
+          },
+          handleDecodedText,
+          function () {}
+        );
+        scannerRunning = true;
+        showMessage(scannerMessage, 'พร้อมสแกน ยก QR Code ให้อยู่กลางกรอบ');
+      } catch (error) {
+        showMessage(scannerMessage, 'เปิดกล้องไม่สำเร็จ กรุณาอนุญาตกล้อง หรือใช้หมายเลข BIB', 'error');
+        fallbackDetails.open = true;
+      } finally {
+        startCameraButton.disabled = scannerRunning;
+      }
+    }
+
+    async function stopCamera() {
+      if (scanner && scannerRunning) {
+        try { await scanner.stop(); } catch (error) {}
+      }
+      scannerRunning = false;
+      startCameraButton.disabled = false;
+    }
+
+    async function handleDecodedText(decodedText) {
+      if (processing) return;
+      const token = extractToken(decodedText);
+      if (!token) {
+        showMessage(scannerMessage, 'QR นี้ไม่ใช่ QR ของระบบลงทะเบียน', 'error');
+        return;
+      }
+
+      const now = Date.now();
+      if (token === lastScanValue && now - lastScanAt < 8000) return;
+      lastScanValue = token;
+      lastScanAt = now;
+      processing = true;
+      pauseScanner();
+      showMessage(scannerMessage, 'กำลังเช็กอิน กรุณารอสักครู่');
+      await processCheckin({ token: token });
+    }
+
+    async function processCheckin(reference) {
+      try {
+        const data = await postToApi({
+          action: 'staff-checkin',
+          staffName: credentials.staffName,
+          pin: credentials.pin,
+          method: 'SELF_KIOSK',
+          token: reference.token || '',
+          bibNumber: reference.bibNumber || '',
+          phoneLast4: reference.phoneLast4 || ''
+        });
+        renderResult(data.runner || {}, Boolean(data.alreadyCheckedIn), '');
+      } catch (error) {
+        renderResult({}, false, error.message || 'เช็กอินไม่สำเร็จ');
+      }
+    }
+
+    function renderResult(runner, alreadyCheckedIn, errorMessage) {
+      scannerCard.hidden = true;
+      resultCard.hidden = false;
+      fallbackMessage.hidden = true;
+      const fullName = [runner.prefix, runner.firstName, runner.lastName].filter(Boolean).join(' ');
+      const tone = errorMessage ? 'error' : (alreadyCheckedIn ? 'warning' : 'success');
+      const icon = errorMessage ? '×' : (alreadyCheckedIn ? '!' : '✓');
+      const title = errorMessage ? 'ไม่สามารถเช็กอินได้' : (alreadyCheckedIn ? 'เช็กอินไว้แล้ว' : 'เช็กอินสำเร็จ');
+      const seconds = errorMessage ? 6 : 4;
+
+      resultCard.className = 'card result ' + tone;
+      resultCard.innerHTML =
+        '<div class="status-icon">' + icon + '</div>' +
+        '<h2>' + escapeHtml(title) + '</h2>' +
+        (fullName ? '<p class="runner-name">' + escapeHtml(fullName) + '</p>' : '') +
+        (errorMessage
+          ? '<p class="message error">' + escapeHtml(errorMessage) + '</p>'
+          : '<div class="details">' +
+              '<div class="detail"><span>หมายเลข BIB</span><strong>' + escapeHtml(runner.bibNumber || 'แจกหน้างาน') + '</strong></div>' +
+              '<div class="detail"><span>ระยะวิ่ง</span><strong>' + escapeHtml(runner.distance || '-') + '</strong></div>' +
+            '</div>') +
+        '<p id="countdown" class="countdown">กลับไปหน้าสแกนใน ' + seconds + ' วินาที</p>';
+
+      playTone(errorMessage ? 'error' : (alreadyCheckedIn ? 'warning' : 'success'));
+      startResetCountdown(seconds);
+    }
+
+    function startResetCountdown(seconds) {
+      clearTimers();
+      let remaining = seconds;
+      countdownTimer = setInterval(function () {
+        remaining -= 1;
+        const countdown = document.getElementById('countdown');
+        if (countdown && remaining > 0) countdown.textContent = 'กลับไปหน้าสแกนใน ' + remaining + ' วินาที';
+      }, 1000);
+      resetTimer = setTimeout(resetForNextRunner, seconds * 1000);
+    }
+
+    function resetForNextRunner() {
+      clearTimers();
+      fallbackForm.reset();
+      fallbackDetails.open = false;
+      resultCard.hidden = true;
+      resultCard.innerHTML = '';
+      scannerCard.hidden = false;
+      processing = false;
+      showMessage(scannerMessage, 'พร้อมสแกน ยก QR Code ให้อยู่กลางกรอบ');
+      resumeScanner();
+    }
+
+    function pauseScanner() {
+      if (!scanner || !scannerRunning || typeof scanner.pause !== 'function') return;
+      try { scanner.pause(true); } catch (error) {}
+    }
+
+    function resumeScanner() {
+      if (!scannerRunning) {
+        startCamera();
+        return;
+      }
+      if (scanner && typeof scanner.resume === 'function') {
+        try { scanner.resume(); } catch (error) { stopCamera().then(startCamera); }
+      }
+    }
+
+    function clearTimers() {
+      if (resetTimer) clearTimeout(resetTimer);
+      if (countdownTimer) clearInterval(countdownTimer);
+      resetTimer = null;
+      countdownTimer = null;
+    }
+
+    async function toggleFullscreen() {
+      try {
+        if (!document.fullscreenElement) {
+          await document.documentElement.requestFullscreen();
+          fullscreenButton.textContent = 'ออกจากเต็มหน้าจอ';
+        } else {
+          await document.exitFullscreen();
+          fullscreenButton.textContent = 'เต็มหน้าจอ';
+        }
+      } catch (error) {}
+    }
+
+    async function requestWakeLock() {
+      if (!('wakeLock' in navigator)) return;
+      try { wakeLock = await navigator.wakeLock.request('screen'); } catch (error) {}
+    }
+
+    async function releaseWakeLock() {
+      if (!wakeLock) return;
+      try { await wakeLock.release(); } catch (error) {}
+      wakeLock = null;
+    }
+
+    function playTone(tone) {
+      try {
+        const AudioContext = window.AudioContext || window.webkitAudioContext;
+        const context = new AudioContext();
+        const oscillator = context.createOscillator();
+        const gain = context.createGain();
+        oscillator.connect(gain);
+        gain.connect(context.destination);
+        oscillator.frequency.value = tone === 'success' ? 880 : (tone === 'warning' ? 520 : 220);
+        gain.gain.setValueAtTime(.08, context.currentTime);
+        gain.gain.exponentialRampToValueAtTime(.001, context.currentTime + .22);
+        oscillator.start();
+        oscillator.stop(context.currentTime + .22);
+      } catch (error) {}
+    }
+
+    async function postToApi(payload) {
+      const response = await fetch(WEB_APP_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload),
+        cache: 'no-store',
+        redirect: 'follow'
+      });
+      if (!response.ok) throw new Error('ไม่สามารถเชื่อมต่อระบบได้');
+      const data = await response.json();
+      if (!data.success) throw new Error(data.message || 'ระบบทำรายการไม่สำเร็จ');
+      return data;
+    }
+
+    function extractToken(value) {
+      const text = String(value || '').trim();
+      const directMatch = text.match(/^[a-f0-9]{32}$/i);
+      if (directMatch) return directMatch[0].toLowerCase();
+      const urlMatch = text.match(/[?&]token=([a-f0-9]{32})(?:&|$)/i);
+      return urlMatch ? urlMatch[1].toLowerCase() : '';
+    }
+
+    function showMessage(element, message, tone) {
+      element.hidden = false;
+      element.innerHTML = '<p class="message' + (tone ? ' ' + tone : '') + '">' + escapeHtml(message) + '</p>';
+    }
+
+    function escapeHtml(value) {
+      return String(value == null ? '' : value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+  </script>
+</body>
+</html>
