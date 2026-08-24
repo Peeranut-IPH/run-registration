@@ -151,7 +151,7 @@
     .summary-breakdown { margin: 10px 0 0; color: var(--muted); font-size: 12px; text-align: center; }
     .summary-warning { margin-top: 10px; padding: 10px 12px; color: var(--warning); font-size: 12px; text-align: center; background: var(--warning-bg); border-radius: 10px; }
 
-    .mode-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 9px; }
+    .mode-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 9px; }
     .mode-option { position: relative; cursor: pointer; }
     .mode-option input { position: absolute; opacity: 0; pointer-events: none; }
     .mode-option span {
@@ -306,15 +306,11 @@
         <div class="mode-grid">
           <label class="mode-option">
             <input type="radio" name="operationMode" value="CHECKIN" checked>
-            <span>เช็กอินอย่างเดียว<small>สำหรับผู้ที่มี BIB แล้ว</small></span>
+            <span>เช็กอินสำรอง<small>ใช้เมื่อจุด Self Check-in สแกนไม่ได้</small></span>
           </label>
           <label class="mode-option">
             <input type="radio" name="operationMode" value="PRE_EVENT">
             <span>รับ BIB ก่อนวันงาน<small>ส่งมอบ BIB แต่ยังไม่เช็กอิน</small></span>
-          </label>
-          <label class="mode-option">
-            <input type="radio" name="operationMode" value="EVENT_DAY">
-            <span>รับ BIB วันงาน<small>ส่งมอบ BIB และเช็กอินพร้อมกัน</small></span>
           </label>
         </div>
         <div id="bibSettings" class="bib-settings" hidden>
@@ -524,12 +520,12 @@
       bibSettings.hidden = checkinOnly;
       scannerTitle.textContent = checkinOnly ? 'สแกน QR Code' : 'ค้นหาหรือสแกนผู้รับ BIB';
       scannerDescription.textContent = checkinOnly
-        ? 'กดเปิดกล้อง แล้วส่อง QR Code ของผู้สมัครให้อยู่กลางกรอบ'
+        ? 'ช่วยเช็กอินกรณีผู้วิ่งสแกนด้วยตนเองไม่ได้ หรือไม่มี QR พร้อมใช้งาน'
         : 'ตรวจสอบกอง BIB ให้ตรงกับระยะ ก่อนค้นหาหรือสแกนผู้สมัคร';
       showMessage(
         scannerMessage,
         checkinOnly
-          ? 'พร้อมเช็กอิน กดเปิดกล้องเพื่อเริ่มใช้งาน'
+          ? 'พร้อมช่วยเช็กอินสำรอง กดเปิดกล้องหรือค้นหาผู้สมัคร'
           : (mode === 'EVENT_DAY'
               ? 'พร้อมส่งมอบ BIB และเช็กอินพร้อมกัน'
               : 'พร้อมส่งมอบ BIB ก่อนวันงาน')
@@ -627,7 +623,7 @@
           ' คน · VIP ' + nonNegativeNumber(byType.VIP) +
           ' คน · อัปเดต ' + escapeHtml(updatedAt || '-') + '</p>' +
         (missingBib > 0
-          ? '<p class="summary-warning">ยังไม่มี BIB ' + missingBib + ' คน</p>'
+          ? '<p class="summary-warning">ยังไม่ผูกเลข BIB ในระบบ ' + missingBib + ' คน</p>'
           : '');
     }
 
