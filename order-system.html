@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>วิ่งล้อมเมือง — จำหน่ายเสื้อที่ระลึก</title>
+<title>วิ่งล้อมเมือง — สนับสนุนเพื่อรับเสื้อที่ระลึก</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;500;600;700&family=Noto+Sans+Thai:wght@400;500;600&display=swap" rel="stylesheet">
@@ -669,6 +669,18 @@
     font-size:11px;
     margin-top:8px;
   }
+  .privacy-consent{
+    margin-top:14px;
+    color:var(--muted);
+    text-align:center;
+    font-size:11px;
+    line-height:1.6;
+  }
+  .privacy-consent a{
+    color:var(--orange-deep);
+    font-weight:600;
+    text-underline-offset:2px;
+  }
 
   .submit-btn{
     width:100%;
@@ -870,7 +882,7 @@
   <div class="header">
     <p class="eyebrow">RUN AROUND THE CITY · HEALTHY CITY</p>
     <h1 class="title">วิ่งล้อมเมือง</h1>
-    <p class="subtitle">จำหน่ายเสื้อที่ระลึก · โรงพยาบาลกลาง สำนักการแพทย์</p>
+    <p class="subtitle">สนับสนุนเพื่อรับเสื้อที่ระลึก · โรงพยาบาลกลาง สำนักการแพทย์</p>
   </div>
 
   <div class="tabs">
@@ -1233,6 +1245,8 @@
       </div>
 
       ${state.error ? `<div class="error-text">${escapeHTML(state.error)}</div>` : ""}
+
+      <div class="privacy-consent">เมื่อยืนยันคำสั่งซื้อ ถือว่าท่านรับทราบ <a href="privacy.html" target="_blank" rel="noopener">ประกาศความเป็นส่วนตัว</a></div>
 
       <button class="submit-btn" id="submitBtn" ${(state.submitting || state.slipProcessing || !state.slipFile || !state.slipUploadToken || qtyTotal<=0)?'disabled':''}>
         ${state.slipProcessing
