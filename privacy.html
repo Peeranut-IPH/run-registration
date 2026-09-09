@@ -39,6 +39,7 @@
     .button.primary{color:#fff;background:var(--green)}
     @media(max-width:620px){main{margin-top:22px}.card{padding:21px 17px}h1{font-size:30px}.actions{grid-template-columns:1fr}}
   </style>
+  <link rel="prefetch" href="order-system.html">
 </head>
 <body>
   <header class="topbar">
@@ -103,9 +104,27 @@
 
       <div class="actions">
         <a class="button primary" href="runner-regit.html">กลับไปหน้าลงทะเบียนวิ่ง</a>
-        <a class="button" href="order-system.html">กลับไปหน้าสนับสนุนเพื่อรับเสื้อที่ระลึก</a>
+        <a class="button" id="backToStore" href="order-system.html">กลับไปหน้าสนับสนุนเพื่อรับเสื้อที่ระลึก</a>
       </div>
     </article>
   </main>
+  <script>
+    document.getElementById('backToStore').addEventListener('click', function (event) {
+      try {
+        const referrer = document.referrer ? new URL(document.referrer) : null;
+        const cameFromStore =
+          referrer &&
+          referrer.origin === window.location.origin &&
+          /\/order-system\.html$/.test(referrer.pathname);
+
+        if (cameFromStore) {
+          event.preventDefault();
+          window.history.back();
+        }
+      } catch (error) {
+        return;
+      }
+    });
+  </script>
 </body>
 </html>
