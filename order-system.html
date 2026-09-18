@@ -79,6 +79,12 @@
     margin:0;
     line-height:1.6;
   }
+  .header-organization{
+    margin:5px 0 0;
+    font-size:12px;
+    line-height:1.7;
+    color:#fff;
+  }
 
   /* ---- Tabs ---- */
   .tabs{
@@ -167,11 +173,12 @@
   .design-piece .shirt-frame{
     border-radius:14px;
     overflow:hidden;
-    aspect-ratio:1/1;
+    aspect-ratio:3/5;
     border:1px solid var(--line);
     background:#fff;
   }
   .design-piece .shirt-frame svg{width:100%;height:100%;display:block;}
+  .design-piece .shirt-frame img{width:100%;height:100%;display:block;object-fit:contain;}
   .design-piece .cap{
     margin-top:8px;
     font-family:'Kanit',sans-serif;
@@ -321,7 +328,8 @@
   }
 
   .method-toggle{
-    display:flex;
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
     gap:10px;
   }
   .method-toggle button{
@@ -882,7 +890,8 @@
   <div class="header">
     <p class="eyebrow">RUN AROUND THE CITY · HEALTHY CITY</p>
     <h1 class="title">วิ่งล้อมเมือง</h1>
-    <p class="subtitle">สนับสนุนเพื่อรับเสื้อที่ระลึก · โรงพยาบาลกลาง สำนักการแพทย์</p>
+    <p class="subtitle">สนับสนุนเพื่อรับเสื้อที่ระลึก</p>
+    <p class="header-organization">โรงพยาบาลกลาง สำนักการแพทย์ · เขตราชเทวี - เขตพญาไท</p>
   </div>
 
   <div class="tabs">
@@ -934,7 +943,7 @@
     name: "",
     phone: "",
     qty: emptyQty(),
-    method: "pickup",
+    method: "pickup_hospital",
     address: "",
     slipFile: null,
     slipPreviewUrl: "",
@@ -1087,15 +1096,15 @@
         </div>
         <div class="design-grid">
           <div class="design-piece">
-            <div class="shirt-frame">${shirtSVG(false)}</div>
+            <div class="shirt-frame"><img src="assets/shirt-front-white.png" alt="แบบเสื้อที่ระลึกวิ่งล้อมเมือง ด้านหน้า" width="943" height="1667"></div>
             <div class="cap">ด้านหน้า</div>
           </div>
           <div class="design-piece">
-            <div class="shirt-frame">${shirtSVG(true)}</div>
+            <div class="shirt-frame"><img src="assets/shirt-back.jpg" alt="แบบเสื้อที่ระลึกวิ่งล้อมเมือง ด้านหลัง" width="1504" height="2778"></div>
             <div class="cap">ด้านหลัง</div>
           </div>
         </div>
-        <div class="design-foot"><span class="placeholder-tag">ภาพตัวอย่าง</span> ลายจริงกำลังตามมา — ส่งรูปเสื้อมาแล้วจะเปลี่ยนเป็นภาพจริงให้ทันที</div>
+        <div class="design-foot">แบบเสื้อที่ระลึกวิ่งล้อมเมือง · ด้านหน้าและด้านหลัง</div>
       </div>
 
       <div class="field">
@@ -1149,8 +1158,10 @@
       <div class="field">
         <label>วิธีรับเสื้อ</label>
         <div class="method-toggle">
-          <button type="button" data-method="pickup" class="${state.method==='pickup'?'active':''}">รับด้วยตนเอง</button>
-          <button type="button" data-method="mail" class="${state.method==='mail'?'active':''}">ส่งไปรษณีย์ (+${shippingFee} บาท)</button>
+          <button type="button" data-method="pickup_hospital" aria-pressed="${state.method==='pickup_hospital'}" class="${state.method==='pickup_hospital'?'active':''}">รับ ณ โรงพยาบาลกลาง</button>
+          <button type="button" data-method="pickup_ratchathewi" aria-pressed="${state.method==='pickup_ratchathewi'}" class="${state.method==='pickup_ratchathewi'?'active':''}">รับ ณ เขตราชเทวี</button>
+          <button type="button" data-method="pickup_phayathai" aria-pressed="${state.method==='pickup_phayathai'}" class="${state.method==='pickup_phayathai'?'active':''}">รับ ณ เขตพญาไท</button>
+          <button type="button" data-method="mail" aria-pressed="${state.method==='mail'}" class="${state.method==='mail'?'active':''}">ส่งไปรษณีย์ (+${shippingFee} บาท)</button>
         </div>
       </div>
 
@@ -1533,6 +1544,7 @@
         sizes:resultSizes,
         qtyTotal:Number(result.totalQty) || qtyTotal,
         method:result.deliveryMethod || state.method,
+        pickupLocation:result.pickupLocation || "",
         address:result.addressLine || (state.method==="mail" ? state.address.trim() : ""),
         total:Number(result.grandTotal),
         paymentSlip:{attached:true},
@@ -1543,7 +1555,7 @@
       state.confirmedOrder = order;
       state.name=""; state.phone=""; state.address="";
       state.qty = emptyQty();
-      state.method = "pickup";
+      state.method = "pickup_hospital";
       state.pendingRequestId = "";
       clearSlip();
       state.submitting = false;
@@ -1571,7 +1583,7 @@
         <div class="note">
           <strong>${escapeHTML(o.name)}</strong> · ${escapeHTML(o.phone)}<br>
           ${sizesText} (รวม ${o.qtyTotal} ตัว)<br>
-          วิธีรับ: ${o.method==='pickup'?'รับด้วยตนเอง':'ส่งไปรษณีย์'}<br>
+          วิธีรับ: ${escapeHTML(methodLabel(o.method, o.pickupLocation))}<br>
           ${o.address ? 'ที่อยู่: '+escapeHTML(o.address)+'<br>' : ''}
           ยอดชำระ: <strong>${o.total.toLocaleString()} บาท</strong><br>
           หลักฐานการชำระเงิน: <strong>แนบแล้ว</strong><br>
@@ -1588,7 +1600,22 @@
     });
   }
 
-  function methodLabel(m){ return m==="pickup" ? "รับเอง" : "ไปรษณีย์"; }
+  function methodLabel(m, pickupLocation){
+    const labels = {
+      pickup_hospital: "รับ ณ โรงพยาบาลกลาง",
+      pickup_ratchathewi: "รับ ณ เขตราชเทวี",
+      pickup_phayathai: "รับ ณ เขตพญาไท",
+      mail: "ส่งไปรษณีย์"
+    };
+    if(Object.prototype.hasOwnProperty.call(labels, m)) return labels[m];
+    if(m === "pickup"){
+      const locations = ["โรงพยาบาลกลาง", "เขตราชเทวี", "เขตพญาไท"];
+      return locations.includes(pickupLocation)
+        ? "รับ ณ " + pickupLocation
+        : "รับด้วยตนเอง (ยังไม่ระบุจุดรับ)";
+    }
+    return "ไม่ระบุวิธีรับ";
+  }
 
   function normalizeOrderNo(value){
     return String(value || "").trim().toUpperCase().replace(/\s+/g, "");
@@ -1627,7 +1654,7 @@
             <div class="masked-contact">📞 ${escapeHTML(o.displayPhone || maskPhone(o.phone))}</div>
             <div class="sizes">${sizesText} · รวม ${o.qtyTotal} ตัว</div>
             <div class="bottom">
-              <span class="method-badge">${methodLabel(o.method)}</span>
+              <span class="method-badge">${escapeHTML(methodLabel(o.method || o.deliveryMethod, o.pickupLocation))}</span>
               <span class="amt">${o.total.toLocaleString()} บาท</span>
             </div>
             <div class="status-line">สถานะ: <strong>${escapeHTML(o.status || "รอตรวจสอบ")}</strong></div>
